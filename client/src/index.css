@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222.2 84% 4.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 222.2 84% 4.9%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%;
+    --radius: 0.5rem;
+  }
+ 
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .emergency-pulse {
+    animation: pulse-emergency 2s infinite;
+  }
+  
+  .loader {
+    border: 3px solid hsl(var(--muted));
+    border-top: 3px solid hsl(var(--primary));
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+  }
+
+  /* Fondos para componentes UI */
+  .popover-content,
+  .dialog-content,
+  .dropdown-menu-content,
+  .select-content,
+  .sheet-content,
+  .tooltip-content,
+  .context-menu-content,
+  .command-content,
+  .accordion-content,
+  .tabs-content {
+    @apply bg-white border-gray-200 shadow-lg;
+  }
+
+  /* Fondos específicos para diferentes componentes */
+  .select-content {
+    @apply bg-white border border-gray-200;
+  }
+
+  .dropdown-menu-content {
+    @apply bg-white border border-gray-200;
+  }
+
+  .dialog-content {
+    @apply bg-white border border-gray-200;
+  }
+
+  /* Ventana de notas de voz */
+  .voice-note-window {
+    @apply bg-white border border-gray-200;
+  }
+
+  .dark .popover-content,
+  .dark .dialog-content,
+  .dark .dropdown-menu-content,
+  .dark .select-content,
+  .dark .sheet-content,
+  .dark .tooltip-content,
+  .dark .context-menu-content,
+  .dark .command-content,
+  .dark .accordion-content,
+  .dark .tabs-content {
+    @apply bg-gray-900 border-gray-700;
+  }
+
+  /* Fondos para elementos de formulario */
+  .input,
+  .textarea,
+  .select-trigger {
+    @apply bg-white border-gray-200;
+  }
+
+  .card {
+    @apply bg-white border-gray-200;
+  }
+
+  /* Fondos para overlays */
+  .dialog-overlay,
+  .sheet-overlay {
+    @apply bg-black/50 backdrop-blur-sm;
+  }
+
+  .dark .dialog-overlay,
+  .dark .sheet-overlay {
+    @apply bg-black/70;
+  }
+
+  /* Fondos para botones */
+  .button {
+    @apply bg-white border-gray-200 hover:bg-gray-50;
+  }
+
+  .button[data-variant="default"] {
+    @apply bg-blue-600 hover:bg-blue-700 text-white border-blue-600;
+  }
+
+  /* Estilos para botones y selectores */
+  .button-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white;
+  }
+
+  .button-secondary {
+    @apply bg-gray-100 hover:bg-gray-200 text-gray-900;
+  }
+
+  .select-trigger {
+    @apply bg-white border-gray-200 hover:border-blue-500;
+  }
+
+  .select-item {
+    @apply hover:bg-blue-50;
+  }
+
+  /* Estilos para tarjetas y contenedores */
+  .card {
+    @apply bg-white border-gray-200 shadow-sm;
+  }
+
+  .card-header {
+    @apply bg-gray-50 border-b border-gray-200;
+  }
+
+  /* Estilos para modales y diálogos */
+  .modal-content {
+    @apply bg-white border-gray-200 shadow-xl;
+  }
+
+  .modal-header {
+    @apply bg-gray-50 border-b border-gray-200;
+  }
+
+  .modal-footer {
+    @apply bg-gray-50 border-t border-gray-200;
+  }
+
+  /* Estilos para menús desplegables */
+  .dropdown-menu {
+    @apply bg-white border border-gray-200 shadow-lg;
+  }
+
+  .dropdown-menu-item {
+    @apply hover:bg-gray-50;
+  }
+
+  /* Estilos para ventanas emergentes */
+  .popover {
+    @apply bg-white border border-gray-200 shadow-lg;
+  }
+
+  /* Estilos para ventanas de proceso */
+  .process-modal {
+    @apply bg-white border border-gray-200;
+  }
+
+  /* Estilos para ventanas de contacto de emergencia */
+  .emergency-contact-modal {
+    @apply bg-white border border-gray-200;
+  }
+
+  /* Estilos para ventanas de grabación de voz */
+  .voice-recording-modal {
+    @apply bg-white border border-gray-200;
+  }
+}
+
+@keyframes pulse-emergency {
+  0% { 
+    box-shadow: 0 0 0 0 hsla(0, 84%, 60%, 0.7); 
+  }
+  70% { 
+    box-shadow: 0 0 0 10px hsla(0, 84%, 60%, 0); 
+  }
+  100% { 
+    box-shadow: 0 0 0 0 hsla(0, 84%, 60%, 0); 
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

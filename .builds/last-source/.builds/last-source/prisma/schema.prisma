@@ -1,0 +1,191 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                 String             @id @default(uuid())
+  email              String             @unique
+  name               String
+  password           String?            // Hashed password
+  phone              String?            // Cifrado simétrico
+  phoneHash          String?
+  googleId           String?            @unique
+  telegramChatId     String?            // Cifrado
+  telegramChatIdHash String?
+  language           String             @default("es")
+  country            String             @default("EC")
+  role               String             @default("citizen") // 'citizen', 'lawyer', 'admin'
+  lawFirmId          String?
+  lawFirm            LawFirm?           @relation(fields: [lawFirmId], references: [id], onDelete: SetNull)
+  location           Json?              // { latitude, longitude, city }
+  did                String?            @unique
+  publicKey          String?            @db.Text
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  emergencyContacts  EmergencyContact[]
+  legalProcesses     LegalProcess[]
+  consultations      Consultation[]
+  emergencyAlerts    EmergencyAlert[]
+  conversations      Conversation[]
+  caseFiles          CaseFile[]
+  leads              Lead[]
+
+  @@index([email])
+}
+
+model LawFirm {
+  id                    String      @id @default(uuid())
+  name                  String
+  subscriptionPlan      String      @default("free") // 'free', 'pro', 'enterprise'
+  proBonoLimit          Int         @default(3)
+  proBonoUsed           Int         @default(0)
+  notorietyScore        Float       @default(0)
+  whatsAppSessionActive Boolean     @default(false)
+  whatsAppProvider      String      @default("baileys")
+  twilioConfig          Json?       // { accountSid, authToken, phoneNumber }
+  metaConfig            Json?       // { accessToken, phoneNumberId, verifyToken }
+  telegramConfig        Json?       // { botToken, isActive }
+  specialty             String      @default("general")
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  users                 User[]
+  leads                 Lead[]
+  caseFiles             CaseFile[]
+}
+
+model WhatsAppSession {
+  id        String   @id @default(uuid())
+  tenantId  String   @unique
+  creds     String   @db.Text // Cifrado
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id        String   @id @default(uuid())
+  lawFirmId String
+  lawFirm   LawFirm  @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  citizenId String?
+  user      User?    @relation(fields: [citizenId], references: [id], onDelete: SetNull)
+  name      String
+  phone     String?  // Cifrado
+  email     String?
+  summary   String?  @db.Text // Cifrado
+  status    String   @default("new") // 'new', 'contacted', 'negotiation', 'converted', 'archived'
+  isProBono Boolean  @default(false)
+  source    String   @default("platform") // 'whatsapp', 'telegram', 'web_widget', 'platform'
+  createdAt DateTime @default(now())
+}
+
+model CaseFile {
+  id          String   @id @default(uuid())
+  lawFirmId   String
+  lawFirm     LawFirm  @relation(fields: [lawFirmId], references: [id], onDelete: Cascade)
+  clientId    String
+  client      User     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title       String
+  description String?  @db.Text // Cifrado
+  caseNumber  String?
+  court       String?
+  judge       String?
+  status      String   @default("active") // 'active', 'closed', 'suspended'
+  progress    Int      @default(0)
+  documents   Json     @default("[]") // Array of { name, fileUrl, ocrText, uploadedAt }
+  invoices    Json     @default("[]") // Array of { amount, status, dueDate }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmergencyContact {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name            String
+  phone           String   // Cifrado
+  relationship    String
+  whatsappEnabled Boolean  @default(true)
+  createdAt       DateTime @default(now())
+}
+
+model LegalProcess {
+  id                    String   @id @default(uuid())
+  userId                String
+  user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type                  String
+  title                 String
+  description           String?  @db.Text
+  status                String   @default("pending")
+  progress              Int      @default(0)
+  currentStep           Int      @default(0)
+  totalSteps            Int      @default(5)
+  steps                 Json     @default("[]") // Array of steps
+  requiredDocuments     Json     @default("[]") // Array of required docs
+  legalBasis            String?  @db.Text
+  constitutionalArticles Json     @default("[]") // Array of constitutional articles
+  timeline              String?  @db.Text
+  metadata              Json?    // Extra metadata
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model Consultation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String   @db.Text // Cifrado
+  response  String   @db.Text // Cifrado
+  country   String   @default("EC")
+  language  String   @default("es")
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model EmergencyAlert {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  latitude         String?  // Cifrado
+  longitude        String?  // Cifrado
+  address          String?  @db.Text // Cifrado
+  contactsNotified Json?    // Cifrado list
+  status           String
+  createdAt        DateTime @default(now())
+}
+
+model LegalDocument {
+  id             String   @id @default(uuid())
+  title          String
+  content        String   @db.Text
+  country        String
+  category       String
+  tags           Json     @default("[]") // Array of tags
+  embedding      Json?    // Vector embedding values if we cache them
+  constitutionId String?
+  sectionId      String?
+  sectionName    String?
+  createdAt      DateTime @default(now())
+}
+
+model Conversation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String
+  messages  Json     @default("[]") // Array of { role, content, timestamp }
+  context   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SystemConfig {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+}

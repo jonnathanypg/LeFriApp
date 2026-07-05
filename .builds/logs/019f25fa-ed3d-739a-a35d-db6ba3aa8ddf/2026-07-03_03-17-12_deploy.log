@@ -1,0 +1,38 @@
+npm warn deprecated scmp@2.1.0: Just use Node.js's crypto.timingSafeEqual()
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated uuid@10.0.0: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+npm error code 1
+npm error path /home/u668392243/domains/lefri.fundacionunderlife.org/public_html/.builds/source/node_modules/tsx/node_modules/esbuild
+npm error command failed
+npm error command sh -c node install.js
+npm error /home/u668392243/domains/lefri.fundacionunderlife.org/public_html/.builds/source/node_modules/tsx/node_modules/esbuild/install.js:137
+npm error     throw new Error(`Expected ${JSON.stringify(packageJSON.version)} but got ${JSON.stringify(stdout)}`);
+npm error           ^
+npm error
+npm error Error: Expected "0.28.1" but got "0.25.12"
+npm error     at validateBinaryVersion (/home/u668392243/domains/lefri.fundacionunderlife.org/public_html/.builds/source/node_modules/tsx/node_modules/esbuild/install.js:137:11)
+npm error     at /home/u668392243/domains/lefri.fundacionunderlife.org/public_html/.builds/source/node_modules/tsx/node_modules/esbuild/install.js:298:5
+npm error
+npm error Node.js v24.6.0
+npm error A complete log of this run can be found in: /home/u668392243/.npm/_logs/2026-07-03T03_17_13_164Z-debug-0.log
+[31mERROR: Failed to install dependencies[0m
+[36mNOTICE: Attempting to install with legacy peer dependencies enabled[0m
+npm warn deprecated scmp@2.1.0: Just use Node.js's crypto.timingSafeEqual()
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated uuid@10.0.0: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated recharts@2.15.4: 1.x and 2.x branches are no longer active. Bump to Recharts v3 to receive latest features and bugfixes. See https://github.com/recharts/recharts/wiki/3.0-migration-guide
+
+added 635 packages, and audited 636 packages in 10s
+
+78 packages are looking for funding
+  run `npm fund` for details
+
+8 vulnerabilities (6 moderate, 2 high)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.

@@ -1,0 +1,8 @@
+PassengerAppRoot /home/u668392243/domains/lefri.fundacionunderlife.org/public_html
+PassengerAppType node
+PassengerNodejs /opt/alt/alt-nodejs22/root/bin/node
+PassengerStartupFile dist/index.js
+PassengerBaseURI /
+PassengerRestartDir /home/u668392243/domains/lefri.fundacionunderlife.org/public_html/tmp
+SetEnv NODE_OPTIONS "--require /home/u668392243/domains/lefri.fundacionunderlife.org/public_html/.builds/config/preload-env.cjs"
+RewriteRule ^\.builds - [F,L]
