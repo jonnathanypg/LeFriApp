@@ -36,7 +36,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     saveUninitialized: false,
     store: sessionStore,
     cookie: {
-      secure: isProd,
+      secure: isProd && process.env.DISABLE_SECURE_COOKIE !== 'true',
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },

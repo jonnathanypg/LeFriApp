@@ -3,18 +3,10 @@
  *
  * This server runs both the LeFriApp REST API and the integrated
  * WhatsApp session manager (Baileys) in a single Node.js process.
- * This is the architecture required by Hostinger Business Hosting,
- * which supports only one Node.js application per project.
- *
- * Architecture overview:
- * - Express HTTP server on process.env.PORT (default 8080)
- * - WhatsApp sessions managed in-memory via WhatsAppManager (server/whatsapp/)
- * - MongoDB connection for WhatsApp session persistence
- * - MySQL (Prisma) for all application data
+ * 100% MySQL (Prisma) + MultiFileAuthState, zero MongoDB overhead.
  */
 
 import express, { type Request, Response, NextFunction } from "express";
-import mongoose from "mongoose";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { WhatsAppManager } from "./whatsapp/whatsapp-manager";
@@ -22,26 +14,25 @@ import { WhatsAppManager } from "./whatsapp/whatsapp-manager";
 // ──────────────────────────────────────────────────────────────────────────────
 // Environment variable validation
 // ──────────────────────────────────────────────────────────────────────────────
-const requiredEnvVars = ["DATABASE_URL", "OPENAI_API_KEY"];
+if (!process.env.DATABASE_URL) {
+  throw new Error("Falta la variable de entorno requerida: DATABASE_URL");
+}
+
+if (!process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY) {
+  console.warn("[WARN] Ni GEMINI_API_KEY ni OPENAI_API_KEY están configuradas. Configure al menos una para la IA.");
+}
+
 const optionalEnvVars = [
   "GOOGLE_OAUTH_CLIENT_ID",
   "GOOGLE_OAUTH_CLIENT_SECRET",
   "GOOGLE_OAUTH_REDIRECT_URI",
-  "MONGODB_URI",
+  "PINECONE_API_KEY",
+  "TELEGRAM_BOT_TOKEN"
 ];
-
-const missingEnvVars = requiredEnvVars.filter((v) => !process.env[v]);
-if (missingEnvVars.length > 0) {
-  throw new Error(
-    `Faltan las siguientes variables de entorno requeridas: ${missingEnvVars.join(", ")}`
-  );
-}
 
 const missingOptional = optionalEnvVars.filter((v) => !process.env[v]);
 if (missingOptional.length > 0) {
-  console.warn(
-    `[WARN] Variables de entorno opcionales no configuradas: ${missingOptional.join(", ")}.`
-  );
+  console.log(`[INFO] Variables opcionales no configuradas: ${missingOptional.join(", ")}.`);
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -105,23 +96,10 @@ app.use((req, res, next) => {
     server.listen({ port, host: "0.0.0.0" }, async () => {
       log(`Servidor iniciado en el puerto ${port}`);
 
-      // ──────────────────────────────────────────────────────────────────────
-      // Initialize MongoDB for WhatsApp session persistence (optional)
-      // ──────────────────────────────────────────────────────────────────────
-      const mongoUri = process.env.MONGODB_URI;
-      if (mongoUri) {
-        mongoose
-          .connect(mongoUri)
-          .then(async () => {
-            log("MongoDB connected — iniciando sesiones de WhatsApp guardadas...");
-            await WhatsAppManager.autoStartAll();
-          })
-          .catch((err) => {
-            log(`[WARN] No se pudo conectar a MongoDB: ${err.message}. Las sesiones de WhatsApp no se restaurarán automáticamente.`);
-          });
-      } else {
-        log("[WARN] MONGODB_URI no configurado. Las sesiones de WhatsApp no se persistirán entre reinicios.");
-      }
+      // Auto-iniciar sesiones de WhatsApp guardadas en MySQL
+      WhatsAppManager.autoStartAll().catch((err) => {
+        log(`[INFO] WhatsApp session manager: ${err.message}`);
+      });
     });
 
     // Graceful shutdown
@@ -129,7 +107,6 @@ app.use((req, res, next) => {
       log("Recibida señal SIGTERM, cerrando servidor...");
       server.close(() => {
         log("Servidor cerrado");
-        mongoose.disconnect().catch(() => {});
         process.exit(0);
       });
     });
@@ -137,7 +114,7 @@ app.use((req, res, next) => {
     process.on("SIGINT", () => {
       log("Recibida señal SIGINT, cerrando servidor...");
       server.close(() => {
-        mongoose.disconnect().catch(() => {});
+        log("Servidor cerrado");
         process.exit(0);
       });
     });

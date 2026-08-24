@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { requireAuth } from "./auth";
 import multer from 'multer';
 import { WhatsAppManager } from "../whatsapp/whatsapp-manager";
+// @ts-ignore
 import qr from "qr-image";
 
 export const lawfirmRouter = Router();

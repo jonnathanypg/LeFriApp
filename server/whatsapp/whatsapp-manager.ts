@@ -2,12 +2,9 @@
  * whatsapp-manager.ts
  *
  * WhatsApp session manager integrated directly into the main Express server.
- * Uses Baileys (multi-file auth) to manage multiple tenant sessions in memory,
- * persisting credentials to MySQL via Prisma for reconnection on server restart.
- *
- * Architecture note: Previously this ran as a separate microservice on port 3001.
- * It is now embedded in the main Express server process to simplify deployment
- * on Hostinger Business Hosting (single Node.js app per project).
+ * Uses Baileys (useMultiFileAuthState) with persistent local storage in sessions/
+ * and automatic synchronization to MySQL via Prisma.
+ * Zero MongoDB dependency: 100% unified in MySQL.
  */
 
 import * as Baileys from "@whiskeysockets/baileys";
@@ -24,6 +21,18 @@ export class WhatsAppManager {
   private static instances: Map<string, Baileys.WASocket> = new Map();
   private static qrCodes: Map<string, string> = new Map();
   private static connectionStates: Map<string, string> = new Map();
+
+  private static getSessionDir(tenantId: string): string {
+    const baseDir = path.join(process.cwd(), "sessions");
+    if (!fs.existsSync(baseDir)) {
+      fs.mkdirSync(baseDir, { recursive: true });
+    }
+    const sessionDir = path.join(baseDir, `wa_${tenantId}`);
+    if (!fs.existsSync(sessionDir)) {
+      fs.mkdirSync(sessionDir, { recursive: true });
+    }
+    return sessionDir;
+  }
 
   /** Get or initialize a WhatsApp socket for the given tenantId */
   public static async getClient(tenantId: string): Promise<Baileys.WASocket> {
@@ -57,8 +66,8 @@ export class WhatsAppManager {
       this.qrCodes.delete(tenantId);
     }
 
-    // Remove session files from /tmp
-    const sessionDir = path.join("/tmp", "wa_sessions", tenantId);
+    // Remove session files from sessions dir
+    const sessionDir = this.getSessionDir(tenantId);
     if (fs.existsSync(sessionDir)) {
       fs.rmSync(sessionDir, { recursive: true, force: true });
     }
@@ -75,20 +84,16 @@ export class WhatsAppManager {
 
   /** Initialize a Baileys session for a tenant */
   private static async initSession(tenantId: string): Promise<Baileys.WASocket> {
-    const sessionDir = path.join("/tmp", "wa_sessions", tenantId);
-    if (!fs.existsSync(sessionDir)) {
-      fs.mkdirSync(sessionDir, { recursive: true });
-    }
+    const sessionDir = this.getSessionDir(tenantId);
 
-    // 1. Restore Baileys auth files from MySQL if available
+    // 1. Restore Baileys auth files from MySQL if available and directory is empty
     try {
       const dbSession = await executeWithRetry(() =>
         prisma.whatsAppSession.findUnique({ where: { tenantId } })
       );
       if (dbSession?.creds) {
-        // creds is stored as a JSON string containing the file map
         const filesMap: Record<string, string> = JSON.parse(dbSession.creds);
-        console.log(`[WA-Manager] Restoring ${Object.keys(filesMap).length} session files for tenant: ${tenantId}`);
+        console.log(`[WA-Manager] Restoring ${Object.keys(filesMap).length} session files from MySQL for tenant: ${tenantId}`);
         for (const [filename, contentBase64] of Object.entries(filesMap)) {
           const filePath = path.join(sessionDir, filename);
           const fileDir = path.dirname(filePath);
@@ -99,7 +104,7 @@ export class WhatsAppManager {
         }
       }
     } catch (error) {
-      console.error(`[WA-Manager] Error restoring session for ${tenantId}:`, error);
+      console.error(`[WA-Manager] Error restoring session from MySQL for ${tenantId}:`, error);
     }
 
     // 2. Initialize Baileys Multi-File Auth State
@@ -160,67 +165,45 @@ export class WhatsAppManager {
       if (qr) {
         this.qrCodes.set(tenantId, qr);
         this.connectionStates.set(tenantId, "qr_ready");
-        console.log(`[WA-Manager] QR generado para tenant: ${tenantId}`);
-      }
-
-      if (connection === "open") {
-        this.qrCodes.delete(tenantId);
-        this.connectionStates.set(tenantId, "connected");
-        console.log(`[WA-Manager] Sesión conectada para tenant: ${tenantId}`);
-        await saveSessionToMySQL(); // Final backup after connect
+        console.log(`[WA-Manager] QR code generated for tenant: ${tenantId}`);
       }
 
       if (connection === "close") {
-        const shouldReconnect =
-          (lastDisconnect?.error as any)?.output?.statusCode !==
-          Baileys.DisconnectReason.loggedOut;
-        console.log(
-          `[WA-Manager] Conexión cerrada para tenant: ${tenantId}. Reconectando: ${shouldReconnect}`
-        );
+        this.connectionStates.set(tenantId, "disconnected");
+        this.qrCodes.delete(tenantId);
+        const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
+        const shouldReconnect = statusCode !== Baileys.DisconnectReason.loggedOut;
+        console.log(`[WA-Manager] Connection closed for ${tenantId}. Code: ${statusCode}. Reconnecting: ${shouldReconnect}`);
 
         if (shouldReconnect) {
-          this.connectionStates.set(tenantId, "reconnecting");
-          this.instances.delete(tenantId);
           setTimeout(() => this.initSession(tenantId), 5000);
         } else {
-          // Logged out — clean up everything
           await this.disconnect(tenantId);
         }
+      } else if (connection === "open") {
+        this.connectionStates.set(tenantId, "connected");
+        this.qrCodes.delete(tenantId);
+        console.log(`[WA-Manager] WhatsApp connection OPEN for tenant: ${tenantId}`);
+        await saveSessionToMySQL();
       }
     });
 
-    // Forward incoming messages to the webhook handler in the same process
-    socket.ev.on("messages.upsert", async (m) => {
-      if (m.type === "notify") {
-        for (const msg of m.messages) {
-          if (!msg.key.fromMe && msg.message) {
-            const phone = msg.key.remoteJid?.split("@")[0];
-            let text =
-              msg.message.conversation ||
-              msg.message.extendedTextMessage?.text;
-            let audioBase64: string | undefined;
+    // Listen for incoming messages and forward to /api/webhooks/whatsapp
+    socket.ev.on("messages.upsert", async ({ messages, type }) => {
+      if (type !== "notify") return;
+      for (const msg of messages) {
+        if (msg.key.fromMe) continue;
+        const from = msg.key.remoteJid;
+        if (!from || from.endsWith("@g.us")) continue; // Skip group messages
 
-            if (msg.message.audioMessage) {
-              try {
-                const stream = await Baileys.downloadContentFromMessage(
-                  msg.message.audioMessage,
-                  "audio"
-                );
-                let buffer = Buffer.from([]);
-                for await (const chunk of stream) {
-                  buffer = Buffer.concat([buffer, chunk]);
-                }
-                audioBase64 = buffer.toString("base64");
-              } catch (e) {
-                console.error("[WA-Manager] Error descargando audio:", e);
-              }
-            }
+        const text =
+          msg.message?.conversation ||
+          msg.message?.extendedTextMessage?.text ||
+          msg.message?.imageMessage?.caption ||
+          "";
 
-            if (phone && (text || audioBase64)) {
-              this.forwardToWebhook(phone, text, audioBase64, tenantId);
-            }
-          }
-        }
+        console.log(`[WA-Manager] Incoming message from ${from} for tenant ${tenantId}`);
+        this.forwardToWebhook(tenantId, from.replace("@s.whatsapp.net", ""), text, msg);
       }
     });
 
@@ -229,63 +212,69 @@ export class WhatsAppManager {
 
   /**
    * Forward incoming WhatsApp message to the /api/webhooks/whatsapp endpoint.
-   * Since both run in the same process, we POST to localhost on the same port.
    */
-  private static forwardToWebhook(
-    phone: string,
-    text: string | null | undefined,
-    audioBase64: string | undefined,
-    tenantId: string
-  ) {
-    const port = process.env.PORT || 8080;
-    axios
-      .post(`http://127.0.0.1:${port}/api/webhooks/whatsapp`, {
-        phone,
-        text,
-        audioBase64,
-        tenantId,
-      })
-      .catch((err) => {
-        console.error(
-          `[WA-Manager] Error reenviando mensaje de ${phone}:`,
-          err.message
-        );
-      });
-  }
-
-  /** Send a text message from a tenant's WhatsApp session */
-  public static async sendMessage(
+  private static async forwardToWebhook(
     tenantId: string,
     phone: string,
-    text: string
-  ): Promise<any> {
-    const socket = await this.getClient(tenantId);
-    if (!socket) {
-      throw new Error(`Cliente WhatsApp no disponible para tenant ${tenantId}`);
+    text: string,
+    rawMessage: any
+  ): Promise<void> {
+    const port = process.env.PORT || 8080;
+    try {
+      await axios.post(`http://127.0.0.1:${port}/api/webhooks/whatsapp`, {
+        tenantId,
+        phone,
+        text,
+        rawMessage,
+      });
+    } catch (err: any) {
+      console.error(`[WA-Manager] Error forwarding to webhook:`, err.message);
     }
-    const formattedPhone = phone.includes("@s.whatsapp.net")
-      ? phone
-      : `${phone.replace(/\D/g, "")}@s.whatsapp.net`;
-    return await socket.sendMessage(formattedPhone, { text });
   }
 
-  /** Autostart all sessions that have stored credentials in MySQL */
+  /**
+   * Send a humanized WhatsApp message (with typing simulation and paragraph chunking).
+   */
+  public static async sendHumanizedMessage(
+    tenantId: string,
+    to: string,
+    message: string
+  ): Promise<any> {
+    const socket = await this.getClient(tenantId);
+    const jid = to.includes("@s.whatsapp.net") ? to : `${to.replace(/\D/g, "")}@s.whatsapp.net`;
+
+    // 1. Simulate typing presence
+    try {
+      await socket.sendPresenceUpdate("composing", jid);
+    } catch (e) {}
+
+    const typingDelay = Math.min(1500, Math.max(500, message.length * 15));
+    await new Promise((r) => setTimeout(r, typingDelay));
+
+    try {
+      await socket.sendPresenceUpdate("paused", jid);
+    } catch (e) {}
+
+    // 2. Send message
+    return await socket.sendMessage(jid, { text: message });
+  }
+
+  /**
+   * Auto-start all saved WhatsApp sessions from MySQL on server startup.
+   */
   public static async autoStartAll(): Promise<void> {
     try {
       const sessions = await executeWithRetry(() =>
         prisma.whatsAppSession.findMany({ select: { tenantId: true } })
       );
-      console.log(`[WA-Manager] Reiniciando ${sessions.length} sesiones guardadas...`);
-      for (const session of sessions) {
-        this.initSession(session.tenantId).catch((err) => {
-          console.error(
-            `[WA-Manager] Error reiniciando sesión para ${session.tenantId}:`,
-            err
-          );
-        });
+      console.log(`[WA-Manager] Found ${sessions.length} saved WhatsApp sessions in MySQL.`);
+      for (const { tenantId } of sessions) {
+        this.initSession(tenantId).catch((err) =>
+          console.error(`[WA-Manager] Failed to auto-start session for ${tenantId}:`, err)
+        );
       }
-    } catch (err) {
-      console.error("[WA-Manager] Error al reiniciar sesiones:", err);
+    } catch (error) {
+      console.error("[WA-Manager] Error in autoStartAll:", error);
     }
   }
 }

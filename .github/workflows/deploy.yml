@@ -1,28 +1,93 @@
-name: Deploy LeFriApp to VPS
+name: Deploy to Contabo VPS (LeFriApp)
 
 on:
   push:
     branches:
       - main
-      - master
+      - dev
+
+# Cancel previous in-progress runs on the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   deploy:
-    name: SSH VPS & Deploy
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Deploy to VPS via SSH
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Create Deployment Archive
+        run: |
+          echo "📦 Generando paquete de despliegue para LeFriApp..."
+          tar -czf /tmp/deploy.tar.gz \
+            --exclude='node_modules' \
+            --exclude='.next' \
+            --exclude='dist' \
+            --exclude='.git' \
+            --exclude='*.log' \
+            --exclude='.DS_Store' \
+            --exclude='uploads/*' \
+            .
+          mv /tmp/deploy.tar.gz ./deploy.tar.gz
+          echo "Tamaño del archivo comprimido: $(du -h deploy.tar.gz | cut -f1)"
+
+      # --- DESPLIEGUE A PRODUCCIÓN (RAMA MAIN) ---
+      - name: Copy Archive to Contabo VPS (Production - main)
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/scp-action@v0.1.4
         with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USERNAME }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          port: ${{ secrets.DEPLOY_PORT || 22 }}
+          host: ${{ secrets.CONTABO_HOST }}
+          username: ${{ secrets.CONTABO_USER || 'root' }}
+          password: ${{ secrets.CONTABO_PASSWORD }}
+          source: "deploy.tar.gz"
+          target: "/tmp"
+
+      - name: Extract and Deploy on Contabo VPS (Production - main)
+        if: github.ref == 'refs/heads/main'
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.CONTABO_HOST }}
+          username: ${{ secrets.CONTABO_USER || 'root' }}
+          password: ${{ secrets.CONTABO_PASSWORD }}
           script: |
-            cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin ${{ github.ref_name }}
+            echo '📂 Preparando directorio de destino en Contabo VPS...'
+            mkdir -p ~/lefriapp
+            cd ~/lefriapp
+            echo '📂 Extrayendo archivos del paquete de despliegue...'
+            tar -xzf /tmp/deploy.tar.gz --overwrite
+            rm -f /tmp/deploy.tar.gz
+            echo '⚙️ Ejecutando script de despliegue y orquestación PM2...'
+            chmod +x deploy.sh
+            ./deploy.sh
+
+      # --- DESPLIEGUE A STAGING / DEV (RAMA DEV) ---
+      - name: Copy Archive to Staging Server (Dev Branch)
+        if: github.ref == 'refs/heads/dev'
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER || 'root' }}
+          password: ${{ secrets.DEV_SERVER_PASSWORD }}
+          source: "deploy.tar.gz"
+          target: "/tmp"
+
+      - name: Extract and Deploy on Staging Server (Dev Branch)
+        if: github.ref == 'refs/heads/dev'
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.DEV_SERVER_HOST }}
+          username: ${{ secrets.DEV_SERVER_USER || 'root' }}
+          password: ${{ secrets.DEV_SERVER_PASSWORD }}
+          script: |
+            echo '📂 Preparando directorio de staging en servidor Dev...'
+            mkdir -p ~/lefriapp-dev
+            cd ~/lefriapp-dev
+            echo '📂 Extrayendo archivos del paquete de despliegue...'
+            tar -xzf /tmp/deploy.tar.gz --overwrite
+            rm -f /tmp/deploy.tar.gz
+            echo '⚙️ Ejecutando script de despliegue y orquestación PM2...'
             chmod +x deploy.sh
             ./deploy.sh

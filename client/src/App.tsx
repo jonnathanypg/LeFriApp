@@ -9,6 +9,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { TranslationProvider } from "@/contexts/translations";
 import { ThemeProvider } from "@/components/theme-provider";
 import Login from "@/pages/login";
+import PublicChat from "@/pages/public-chat";
 import Dashboard from "@/pages/dashboard";
 import Consulta from "@/pages/consulta";
 import Proceso from "@/pages/proceso";
@@ -26,8 +27,8 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   
   if (!isInitialized || isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
       </div>
     );
   }
@@ -48,16 +49,18 @@ function Router() {
 
   return (
     <Switch>
+      {/* Public Chat & Landing */}
+      <Route path="/chat" component={PublicChat} />
       <Route path="/login" component={Login} />
       
-      {/* Redirect root to appropriate role dashboard */}
+      {/* Root Path: Show Public Free Chat for visitors, or Role Dashboard for logged-in users */}
       <Route path="/">
         {user ? (
           user.role === 'admin' ? <Redirect to="/admin/dashboard" /> :
           user.role === 'lawyer' ? <Redirect to="/lawyer/dashboard" /> : 
           <Redirect to="/citizen/dashboard" />
         ) : (
-          <Redirect to="/login" />
+          <PublicChat />
         )}
       </Route>
       
@@ -131,10 +134,9 @@ function Router() {
   );
 }
 
-
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="replit-legal-theme">
+    <ThemeProvider defaultTheme="dark" storageKey="replit-legal-theme">
       <QueryClientProvider client={queryClient}>
         <LanguageProvider>
           <TooltipProvider>

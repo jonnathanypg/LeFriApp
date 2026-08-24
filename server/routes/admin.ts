@@ -3,6 +3,7 @@ import { storage } from "../storage";
 import { telegramService } from "../services/telegram";
 import axios from 'axios';
 import { WhatsAppManager } from "../whatsapp/whatsapp-manager";
+// @ts-ignore
 import qr from "qr-image";
 
 export const adminRouter = Router();

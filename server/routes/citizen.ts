@@ -7,21 +7,42 @@ import { geminiService } from "../services/gemini";
 import { whatsAppService } from "../services/whatsapp";
 import { emailService } from "../services/email";
 import { voiceService } from "../services/voice";
+import { prisma, executeWithRetry } from "../prisma-client";
+import {
+  authHashCache,
+  SlidingWindowMemory,
+  LegalTriageHeap,
+  legalConceptTrie
+} from "../services/data-structures";
 import { insertEmergencyContactSchema } from "@shared/schema";
 import multer from 'multer';
 import puppeteer from 'puppeteer';
+import crypto from 'crypto';
 
 export const citizenRouter = Router();
+
+function hashValue(value: string): string {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-citizenRouter.post("/ask", requireAuth, async (req: any, res) => {
+/**
+ * Public & Authenticated Unified Legal Chat (SSE Streaming)
+ * Free for ALL the public, with guest session tracking & RAG integration.
+ */
+citizenRouter.post("/ask", async (req: any, res) => {
   try {
-    const { query, country, language } = req.body;
-    
+    const { query, country, language, guestId } = req.body;
+    const userId = req.session?.userId;
+
+    if (!query || typeof query !== 'string' || !query.trim()) {
+      return res.status(400).json({ error: "Query is required" });
+    }
+
     res.writeHead(200, {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
@@ -30,38 +51,56 @@ citizenRouter.post("/ask", requireAuth, async (req: any, res) => {
       'Access-Control-Allow-Headers': 'Cache-Control'
     });
 
+    // 1. Instant Data Structure Evaluation (Trie O(L) & Heap Urgency)
+    const urgency = LegalTriageHeap.calculateUrgency(query);
+    const trieCitations = legalConceptTrie.matchQuery(query);
+
+    // 2. Fetch Constitutional Articles RAG
     const constitutionalArticles = await constituteService.getRelevantArticles({
       query,
-      country,
+      country: country || "EC",
       language: language || "es",
       limit: 3
     });
 
-    const citations = constitutionalArticles.map((article, index) => ({
+    const citations = constitutionalArticles.map((articleText, index) => ({
       title: `Artículo Constitucional ${index + 1}`,
       url: `#article-${index + 1}`,
-      relevance: Math.max(95 - index * 5, 75)
+      relevance: Math.max(95 - index * 5, 75),
+      source: 'Constitución'
     }));
 
-    if (citations.length === 0) {
-      citations.push(
-        { title: "Constitución Nacional", url: "#", relevance: 90 },
-        { title: "Código Civil", url: "#", relevance: 85 }
-      );
+    // Add Trie citations if found
+    for (const trieArt of trieCitations) {
+      citations.unshift({
+        title: `${trieArt.title} (${trieArt.article})`,
+        url: `#trie-${trieArt.article}`,
+        relevance: 98,
+        source: trieArt.code
+      });
     }
 
-    res.write(`data: ${JSON.stringify({ type: 'citations', data: { citations, constitutionalArticles: constitutionalArticles.slice(0, 2) } })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'citations', data: { citations, urgencyScore: urgency.score } })}\n\n`);
 
-    const previousConsultations = await storage.getConsultations(req.userId);
-    const history = previousConsultations
-      .slice(0, 5)
-      .reverse()
-      .map(c => [
-        { role: 'user' as const, content: c.query },
-        { role: 'assistant' as const, content: c.response }
-      ])
-      .flat();
+    // 3. Build Conversation History (Sliding Window O(1))
+    let history: Array<{ role: 'user' | 'assistant'; content: string }> = [];
+    if (userId) {
+      const previousConsultations = await storage.getConsultations(userId);
+      const rawHistory = previousConsultations
+        .slice(-5)
+        .map(c => [
+          { role: 'user' as const, content: c.query },
+          { role: 'assistant' as const, content: c.response }
+        ])
+        .flat();
+      history = SlidingWindowMemory.fromArray(rawHistory, 6).toArray();
+    } else if (guestId) {
+      const guestSession = authHashCache.getGuestSession(guestId);
+      history = SlidingWindowMemory.fromArray(guestSession.messages, 6).toArray();
+      authHashCache.decrementGuestQuota(guestId);
+    }
 
+    // 4. Run Multi-Agent Legal Processing with Streaming Chunks
     const agentResponse = await multiAgentService.citizenMediatorAgent(
       query,
       country || "EC",
@@ -71,23 +110,183 @@ citizenRouter.post("/ask", requireAuth, async (req: any, res) => {
         res.write(`data: ${JSON.stringify({ type: 'chunk', data: chunk })}\n\n`);
       }
     );
-    
-    await storage.createConsultation({
-      userId: req.userId,
-      query,
-      response: agentResponse.text,
-      country: country || "EC",
-      language: language || "es"
-    });
 
-    res.write(`data: ${JSON.stringify({ type: 'complete', data: { confidence: agentResponse.error ? 0.5 : 0.92 } })}\n\n`);
+    let fullResponse = agentResponse.text;
+
+    // Append legal basis from Trie if relevant
+    if (trieCitations.length > 0 && !fullResponse.includes(trieCitations[0].article)) {
+      const extraCite = `\n\n📌 *Base Legal Aplicable (${trieCitations[0].code})*:\n*${trieCitations[0].title} (${trieCitations[0].article})*: ${trieCitations[0].summary}`;
+      res.write(`data: ${JSON.stringify({ type: 'chunk', data: extraCite })}\n\n`);
+      fullResponse += extraCite;
+    }
+
+    // 5. Persist consultation
+    if (userId) {
+      await storage.createConsultation({
+        userId,
+        query,
+        response: fullResponse,
+        country: country || "EC",
+        language: language || "es"
+      });
+    } else if (guestId) {
+      authHashCache.addGuestMessage(guestId, { role: 'user', content: query });
+      authHashCache.addGuestMessage(guestId, { role: 'assistant', content: fullResponse });
+    }
+
+    res.write(`data: ${JSON.stringify({
+      type: 'complete',
+      data: {
+        confidence: agentResponse.error ? 0.6 : 0.94,
+        suggestLawyer: agentResponse.suggestLawyer || urgency.score >= 7,
+        urgencyScore: urgency.score
+      }
+    })}\n\n`);
     res.end();
-  } catch (error) {
-    res.write(`data: ${JSON.stringify({ type: 'error', data: { error: "Failed to process consultation" } })}\n\n`);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /ask:", error);
+    res.write(`data: ${JSON.stringify({ type: 'error', data: { error: "Failed to process legal consultation" } })}\n\n`);
     res.end();
   }
 });
 
+/**
+ * Sync guest history to authenticated user account (Soft-Onboarding completion)
+ */
+citizenRouter.post("/sync-guest-history", requireAuth, async (req: any, res) => {
+  try {
+    const { guestId } = req.body;
+    if (!guestId) return res.status(400).json({ error: "guestId is required" });
+
+    const guestSession = authHashCache.getGuestSession(guestId);
+    const messages = guestSession.messages || [];
+
+    if (messages.length > 0) {
+      for (let i = 0; i < messages.length - 1; i += 2) {
+        const userMsg = messages[i];
+        const assistantMsg = messages[i + 1];
+        if (userMsg && assistantMsg) {
+          await storage.createConsultation({
+            userId: req.userId,
+            query: userMsg.content,
+            response: assistantMsg.content,
+            country: "EC",
+            language: "es"
+          });
+        }
+      }
+    }
+
+    res.json({ success: true, syncedMessages: messages.length });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to sync guest history" });
+  }
+});
+
+/**
+ * Get connected omnichannel channels status (Web, WhatsApp, Telegram)
+ */
+citizenRouter.get("/channels", requireAuth, async (req: any, res) => {
+  try {
+    const user = await executeWithRetry(() =>
+      prisma.user.findUnique({ where: { id: req.userId } })
+    );
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const telegramConnected = !!(user.telegramChatId || user.telegramChatIdHash);
+    const whatsappConnected = !!(user.phone || user.phoneHash);
+
+    const botUsername = process.env.TELEGRAM_BOT_USERNAME || "LeFriLegalBot";
+    const telegramDeepLink = `https://t.me/${botUsername}?start=link_${user.id}`;
+    const whatsappBotNumber = process.env.WHATSAPP_BOT_NUMBER || "1234567890";
+    const whatsappDeepLink = `https://wa.me/${whatsappBotNumber}?text=Hola,%20deseo%20vincular%20mi%20cuenta%20LeFriApp%20ID:${user.id}`;
+
+    res.json({
+      web: { connected: true, active: true },
+      telegram: {
+        connected: telegramConnected,
+        deepLink: telegramDeepLink,
+        chatId: user.telegramChatId ? "Vinculado" : null
+      },
+      whatsapp: {
+        connected: whatsappConnected,
+        phone: user.phone ? user.phone.slice(-4) : null,
+        deepLink: whatsappDeepLink
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load channel status" });
+  }
+});
+
+/**
+ * Get Unified Cross-Channel Timeline (Web + WhatsApp + Telegram)
+ */
+citizenRouter.get("/unified-history", requireAuth, async (req: any, res) => {
+  try {
+    const user = await executeWithRetry(() =>
+      prisma.user.findUnique({
+        where: { id: req.userId },
+        include: {
+          consultations: { orderBy: { createdAt: 'desc' }, take: 20 },
+          conversations: true
+        }
+      })
+    );
+
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const timeline: Array<{
+      id: string;
+      source: 'web' | 'whatsapp' | 'telegram';
+      title: string;
+      query: string;
+      response: string;
+      createdAt: string;
+    }> = [];
+
+    // 1. Add Web consultations
+    for (const c of user.consultations) {
+      timeline.push({
+        id: c.id,
+        source: 'web',
+        title: c.query.slice(0, 60) + (c.query.length > 60 ? '...' : ''),
+        query: c.query,
+        response: c.response,
+        createdAt: c.createdAt.toISOString()
+      });
+    }
+
+    // 2. Add WhatsApp & Telegram conversations
+    for (const conv of user.conversations) {
+      const source: 'whatsapp' | 'telegram' = conv.sessionId.startsWith('wa_') ? 'whatsapp' : 'telegram';
+      const msgs = (conv.messages as any[]) || [];
+      for (let i = 0; i < msgs.length - 1; i += 2) {
+        const u = msgs[i];
+        const a = msgs[i + 1];
+        if (u && a) {
+          timeline.push({
+            id: `${conv.id}_${i}`,
+            source,
+            title: `[${source.toUpperCase()}] ` + u.content.slice(0, 50),
+            query: u.content,
+            response: a.content,
+            createdAt: u.timestamp || conv.createdAt.toISOString()
+          });
+        }
+      }
+    }
+
+    timeline.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    res.json(timeline);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to load unified history" });
+  }
+});
+
+// Emergency alert endpoint
 citizenRouter.post("/emergency", requireAuth, async (req: any, res) => {
   try {
     const { latitude, longitude, address } = req.body;

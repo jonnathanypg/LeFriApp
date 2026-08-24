@@ -88,8 +88,8 @@ export class WhatsAppService {
           messageId: response.data?.messages?.[0]?.id,
         };
       } else {
-        // Default: Baileys via the embedded WhatsAppManager
-        const result = await WhatsAppManager.sendMessage(
+        // Default: Baileys via the embedded WhatsAppManager with Humanized Delivery
+        const result = await WhatsAppManager.sendHumanizedMessage(
           tenantId,
           message.to,
           message.message
