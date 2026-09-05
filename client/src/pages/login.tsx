@@ -12,7 +12,7 @@ import { Scale, Mail, Lock, User, Globe, MessageSquare, ArrowLeft } from 'lucide
 import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from '@/lib/i18n';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ConversationalAuth } from '@/components/conversational-auth';
+import { TypeformAuth } from '@/components/typeform-auth';
 
 export default function Login() {
   const [location, setLocation] = useLocation();
@@ -152,54 +152,62 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-center items-center p-4 relative selection:bg-indigo-500 selection:text-white">
-      {/* Top Controls */}
-      <div className="absolute top-4 left-4 flex items-center space-x-2">
-        <Button 
-          variant="ghost" 
-          size="sm"
-          onClick={() => setLocation('/')}
-          className="text-slate-400 hover:text-white text-xs flex items-center space-x-1"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Volver al Inicio</span>
-        </Button>
-      </div>
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-indigo-500 selection:text-white">
+      {/* Top Navbar */}
+      <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur px-4 sm:px-8 py-3 flex items-center justify-between z-30">
+        <div className="flex items-center space-x-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={() => setLocation('/')}
+            className="text-slate-400 hover:text-white text-xs flex items-center space-x-1 pl-1"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Volver a la Home</span>
+          </Button>
+          <span className="text-slate-700 hidden sm:inline">|</span>
+          <div className="hidden sm:flex items-center space-x-2">
+            <Scale className="w-4 h-4 text-indigo-400" />
+            <span className="text-xs font-bold text-slate-300">LeFriApp</span>
+            <span className="text-[10px] text-slate-500 font-mono">fundacionunderlife.org</span>
+          </div>
+        </div>
 
-      <div className="absolute top-4 right-4 flex items-center space-x-3">
-        {/* Switch Between Conversational and Classic */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setIsConversational(!isConversational)}
-          className="text-xs border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800"
-        >
-          {isConversational ? 'Modo Clásico' : 'Modo Asistente'}
-        </Button>
+        <div className="flex items-center space-x-3">
+          {/* Switch Between Typeform and Classic */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsConversational(!isConversational)}
+            className="text-xs border-slate-700 bg-slate-900 text-slate-300 hover:bg-slate-800 h-8"
+          >
+            {isConversational ? 'Form Clásico' : 'Experiencia Guiada'}
+          </Button>
 
-        {/* Language Selector */}
-        <Select value={language} onValueChange={(val: any) => setLanguage(val)}>
-          <SelectTrigger className="w-28 bg-slate-900 border-slate-700 text-slate-200 text-xs">
-            <Globe className="w-3.5 h-3.5 mr-1" />
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
-            <SelectItem value="es">Español</SelectItem>
-            <SelectItem value="en">English</SelectItem>
-            <SelectItem value="pt">Português</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+          {/* Language Selector */}
+          <Select value={language} onValueChange={(val: any) => setLanguage(val)}>
+            <SelectTrigger className="w-24 bg-slate-900 border-slate-700 text-slate-200 text-xs h-8">
+              <Globe className="w-3.5 h-3.5 mr-1 text-slate-400" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
+              <SelectItem value="es">ES</SelectItem>
+              <SelectItem value="en">EN</SelectItem>
+              <SelectItem value="pt">PT</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </header>
 
-      {/* Main Container */}
-      <div className="w-full max-w-lg mt-8">
+      {/* Main Content Area */}
+      <main className="flex-1 flex items-center justify-center p-4 sm:p-8 max-w-4xl mx-auto w-full">
         {isConversational ? (
-          <ConversationalAuth 
+          <TypeformAuth 
             initialMode={initialMode} 
-            onSwitchToTraditional={() => setIsConversational(false)} 
+            onSwitchToClassic={() => setIsConversational(false)} 
           />
         ) : (
-          <Card className="w-full shadow-2xl bg-slate-900 border-slate-800 text-slate-100">
+          <Card className="w-full max-w-md shadow-2xl bg-slate-900 border-slate-800 text-slate-100 my-auto">
             <CardHeader className="text-center pb-4">
               <div className="w-14 h-14 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg shadow-indigo-600/30">
                 <Scale className="w-7 h-7 text-white" />
@@ -363,7 +371,7 @@ export default function Login() {
             </CardContent>
           </Card>
         )}
-      </div>
+      </main>
     </div>
   );
 }
