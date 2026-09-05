@@ -44,6 +44,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.use("/api/auth", authRouter);
   app.use("/api/citizen", citizenRouter);
+  // Support legacy and direct /api/ask endpoint for StreamingChatInterface
+  app.use("/api/ask", (req, res, next) => {
+    req.url = "/ask";
+    citizenRouter(req, res, next);
+  });
   app.use("/api/lawyer", lawfirmRouter);
   app.use("/api/lawfirm", lawfirmRouter); // Ensure lawfirm is also mapped if needed
   app.use("/api/billing", billingRouter);
