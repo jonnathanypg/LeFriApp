@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Navbar } from '@/components/navbar';
 import { StreamingChatInterface } from '@/components/streaming-chat-interface';
 import { LegalIntakeWizard } from '@/components/legal-intake-wizard';
+import { ConversationalCaseModal } from '@/components/conversational-case-modal';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
@@ -15,6 +16,7 @@ export default function Consulta() {
   const { user } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState(user?.country || 'EC');
   const [mode, setMode] = useState<'wizard' | 'chat'>('wizard');
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const t = useTranslations(user?.language || 'es');
 
   const countries = [
@@ -80,6 +82,16 @@ export default function Consulta() {
                 </button>
               </div>
 
+              {/* Special Agentic Case Interview Button */}
+              <Button
+                size="sm"
+                onClick={() => setIsAgentModalOpen(true)}
+                className="bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 text-white text-xs flex items-center space-x-1.5 shadow-md shadow-indigo-500/20"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>Entrevista de Caso</span>
+              </Button>
+
               <div className="flex items-center space-x-2">
                 <Select value={selectedCountry} onValueChange={setSelectedCountry}>
                   <SelectTrigger className="w-[150px] bg-slate-900 border-slate-800 text-slate-200 text-xs">
@@ -105,6 +117,16 @@ export default function Consulta() {
               <StreamingChatInterface country={selectedCountry} />
             </div>
           )}
+
+          {/* Agentic Conversational Modal */}
+          <ConversationalCaseModal 
+            isOpen={isAgentModalOpen} 
+            onClose={() => setIsAgentModalOpen(false)}
+            caseCategory="general"
+            onCaseStructured={(data) => {
+              console.log('Caso estructurado por el agente:', data);
+            }}
+          />
         </div>
       </main>
     </div>

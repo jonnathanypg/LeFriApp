@@ -10,6 +10,7 @@ import { TranslationProvider } from "@/contexts/translations";
 import { ThemeProvider } from "@/components/theme-provider";
 import Login from "@/pages/login";
 import PublicChat from "@/pages/public-chat";
+import LandingHome from "@/pages/landing-home";
 import Dashboard from "@/pages/dashboard";
 import Consulta from "@/pages/consulta";
 import Proceso from "@/pages/proceso";
@@ -53,14 +54,14 @@ function Router() {
       <Route path="/chat" component={PublicChat} />
       <Route path="/login" component={Login} />
       
-      {/* Root Path: Show Public Free Chat for visitors, or Role Dashboard for logged-in users */}
+      {/* Root Path: Show High-Performance SEO/AEO Landing Home for visitors, or Role Dashboard for logged-in users */}
       <Route path="/">
         {user ? (
           user.role === 'admin' ? <Redirect to="/admin/dashboard" /> :
           user.role === 'lawyer' ? <Redirect to="/lawyer/dashboard" /> : 
           <Redirect to="/citizen/dashboard" />
         ) : (
-          <PublicChat />
+          <LandingHome />
         )}
       </Route>
       

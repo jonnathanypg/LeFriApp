@@ -1,13 +1,120 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+    <title>LeFriApp | Triaje y Orientación Legal con IA — Fundación Underlife</title>
+    
+    <!-- Meta SEO / AEO / GEO -->
+    <meta name="description" content="LeFriApp es la plataforma LegalTech de Fundación Underlife que democratiza el acceso a la justicia con IA. Orientación jurídica gratuita, triaje técnico inmediato y derivación profesional en Ecuador y Latinoamérica." />
+    <meta name="keywords" content="LeFriApp, Fundación Underlife, asesoría legal gratuita, triaje legal IA, justicia digital, Ecuador legaltech, derecho laboral, pensión alimentos, lefri.fundacionunderlife.org" />
+    <meta name="author" content="Fundación Underlife & WebLifeTech S.A.S." />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <link rel="canonical" href="https://lefri.fundacionunderlife.org/" />
+
+    <!-- GEO Tags -->
+    <meta name="geo.region" content="EC-G" />
+    <meta name="geo.placename" content="Milagro, Guayas, Ecuador" />
+    <meta name="geo.position" content="-2.1340;-79.5942" />
+    <meta name="ICBM" content="-2.1340, -79.5942" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://lefri.fundacionunderlife.org/" />
+    <meta property="og:title" content="LeFriApp | Triaje y Orientación Legal con IA — Fundación Underlife" />
+    <meta property="og:description" content="Democratizando el acceso legal con IA: triaje fundamentado, análisis de casos y asistencia ciudadana respaldada por la Fundación Underlife." />
+    <meta property="og:image" content="https://fundacionunderlife.org/logos/logo-fundacionunderlife-dark.png" />
+    <meta property="og:locale" content="es_EC" />
+    <meta property="og:site_name" content="LeFriApp - Fundación Underlife" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="LeFriApp | Justicia Digital e IA — Fundación Underlife" />
+    <meta name="twitter:description" content="Orientación jurídica inmediata y triaje técnico fundamentado con IA para todos los ciudadanos." />
+    <meta name="twitter:image" content="https://fundacionunderlife.org/logos/logo-fundacionunderlife-dark.png" />
+
+    <!-- Preconnect & Favicon -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
+
+    <!-- Structured Data JSON-LD for Search Engines & Generative AI (GEO/AEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "NGO",
+          "@id": "https://fundacionunderlife.org/#organization",
+          "name": "Fundación Underlife",
+          "url": "https://fundacionunderlife.org",
+          "logo": "https://fundacionunderlife.org/logos/logo-fundacionunderlife-dark.png",
+          "sameAs": [
+            "https://www.instagram.com/underlife_ong/",
+            "https://www.facebook.com/underlife.ong/",
+            "https://www.linkedin.com/company/underlife-ong/"
+          ],
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Milagro",
+            "addressRegion": "Guayas",
+            "addressCountry": "EC"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://lefri.fundacionunderlife.org/#app",
+          "name": "LeFriApp",
+          "url": "https://lefri.fundacionunderlife.org",
+          "applicationCategory": "LegalService",
+          "operatingSystem": "All modern browsers (Desktop, Tablet, Mobile)",
+          "creator": {
+            "@id": "https://fundacionunderlife.org/#organization"
+          },
+          "description": "Plataforma de orientación y triaje jurídico agéntico con Inteligencia Artificial fundamentada en normas constitucionales y leyes locales.",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD",
+            "description": "Acceso gratuito al triaje y orientación jurídica para la comunidad vulnerable."
+          }
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://lefri.fundacionunderlife.org/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "¿Qué es LeFriApp?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "LeFriApp es la iniciativa de innovación tecnológica y legal de Fundación Underlife que permite a los ciudadanos obtener un diagnóstico inicial estructurado sobre sus problemas jurídicos usando Inteligencia Artificial sin costo."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿LeFriApp sustituye a un abogado?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. LeFriApp opera estrictamente como un sistema de triaje, educación y orientación inicial técnica para estructurar hechos y leyes aplicables, facilitando la conexión con abogados colegiados."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "¿En qué países opera LeFriApp?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Inició con anclaje en el marco normativo de Ecuador, expandiéndose a Colombia, Perú, México, Estados Unidos y más jurisdicciones latinoamericanas."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
-  <body>
+  <body class="bg-slate-950 text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>

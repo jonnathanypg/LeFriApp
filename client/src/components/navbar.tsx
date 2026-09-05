@@ -21,7 +21,7 @@ export function Navbar() {
 
   const handleLanguageChange = async (newLanguage: string) => {
     try {
-      setLanguage(newLanguage as 'en' | 'es');
+      setLanguage(newLanguage as 'en' | 'es' | 'pt');
       await updateUser({ language: newLanguage });
       localStorage.setItem('language', newLanguage);
       document.documentElement.lang = newLanguage;
@@ -58,8 +58,9 @@ export function Navbar() {
   };
 
   const languageOptions = [
-    { value: 'en', label: '🇺🇸 English' },
     { value: 'es', label: '🇪🇸 Español' },
+    { value: 'en', label: '🇺🇸 English' },
+    { value: 'pt', label: '🇧🇷 Português' },
   ];
 
   return (

@@ -301,7 +301,8 @@ export const translations = {
     // Languages
     languages: {
       en: "English",
-      es: "Spanish"
+      es: "Spanish",
+      pt: "Portuguese"
     },
 
     // Legal Consultation Interface
@@ -631,7 +632,8 @@ export const translations = {
     // Languages
     languages: {
       en: "Inglés",
-      es: "Español"
+      es: "Español",
+      pt: "Portugués"
     },
 
     // Legal Consultation Interface
@@ -659,6 +661,337 @@ export const translations = {
       duration: "Duración",
       recording: "Grabando...",
       recordingPaused: "Grabación pausada"
+    },
+  },
+
+  pt: {
+    // Navigation
+    dashboard: "Painel",
+    consultation: "Consulta Jurídica",
+    processes: "Processos",
+    emergency: "Emergência",
+    profile: "Perfil",
+    account: "Conta",
+    settings: "Configurações",
+    logout: "Sair",
+
+    // Auth
+    signIn: "Entrar",
+    signUp: "Cadastrar-se",
+    email: "E-mail",
+    password: "Senha",
+    confirmPassword: "Confirmar Senha",
+    fullName: "Nome Completo",
+    createAccount: "Criar Conta",
+    alreadyHaveAccount: "Já tem uma conta?",
+    dontHaveAccount: "Não tem uma conta?",
+    continueWithGoogle: "Continuar com o Google",
+    orContinueWith: "Ou continue com",
+    termsOfService: "Termos de Serviço",
+    privacyPolicy: "Política de Privacidade",
+    byCreating: "Ao continuar, você concorda com nossos",
+    and: "e",
+    signingIn: "Entrando...",
+    creatingAccount: "Criando conta...",
+    authenticating: "Autenticando...",
+
+    // Dashboard
+    welcome: "Bem-vindo ao LeFriAI",
+    welcomeSubtitle: "Seu assistente jurídico inteligente está pronto para ajudar",
+    recentActivity: "Atividade Recente",
+    quickActions: "Ações Rápidas",
+    startConsultation: "Iniciar Consulta",
+    viewProcesses: "Ver Processos",
+    emergencyHelp: "Ajuda de Emergência",
+    noRecentActivity: "Sem atividade recente",
+    consultations: "Consultas",
+    activeProcesses: "Processos Ativos",
+    modeConsultation: "Modo Consulta",
+    modeProcess: "Modo Processo",
+    modeEmergency: "Modo Emergência",
+    modeConsultationDesc: "Faça consultas jurídicas e obtenha respostas contextualizadas por país usando IA avançada.",
+    modeProcessDesc: "Guia passo a passo para processos legais comuns como divórcios, contratos e processos judiciais.",
+    modeEmergencyDesc: "Sistema de alertas automáticos via WhatsApp para seus contatos de emergência.",
+    startConsultationButton: "Iniciar consulta",
+    viewProcessesButton: "Ver processos",
+    setupAlertsButton: "Configurar alertas",
+
+    // Consultation
+    askQuestion: "Faça sua pergunta jurídica",
+    questionPlaceholder: "Escreva sua consulta sobre a Constituição de {country}...",
+    askButton: "Perguntar",
+    consultationHistory: "Histórico de Consultas",
+    newConsultation: "Nova Consulta",
+    searchPlaceholder: "Pesquise em suas consultas...",
+    legalAssistant: "Assistente Jurídico",
+    confidence: "Confiança",
+    sources: "Fontes",
+    relevance: "relevância",
+    quickQuestions: "Perguntas Frequentes",
+    typeQuestion: "Digite sua consulta jurídica...",
+    thinking: "Pensando...",
+    constitution: "Constituição",
+
+    // Processes
+    myProcesses: "Meus Processos",
+    createProcess: "Criar Novo Processo",
+    processType: "Tipo de Processo",
+    processTitle: "Título do Processo",
+    processDescription: "Descrição do Processo",
+    status: "Status",
+    progress: "Progresso",
+    nextStep: "Próximo Passo",
+    currentStep: "Passo Atual",
+    totalSteps: "Passos Totais",
+    startNewProcess: "Iniciar Novo Processo",
+    continueProcess: "Continuar Processo",
+    processLoading: "Carregando processo...",
+    processError: "Erro ao carregar o processo",
+    processDeadline: "Data Limite",
+    processLegalBasis: "Base Legal",
+    processConstitutionalArticles: "Artigos Constitucionais",
+    processCreatedOn: "Criado em",
+    processSuccess: "Processo criado com sucesso",
+    priority: "Prioridade",
+    processDivorce: "Processo de Divórcio",
+    processContract: "Elaboração de Contrato",
+    processLabor: "Ação Trabalhista",
+    step: "Passo",
+    inProgress: "Em andamento",
+    processTypes: {
+      civil: "Processo Civil",
+      penal: "Processo Penal",
+      laboral: "Processo Trabalhista",
+      administrativo: "Processo Administrativo",
+      familia: "Direito de Família",
+      comercial: "Direito Comercial",
+      constitucional: "Processo Constitucional",
+      otros: "Outros"
+    },
+    processStatus: {
+      pending: "Pendente",
+      inProgress: "Em Andamento",
+      completed: "Concluído",
+      cancelled: "Cancelado"
+    },
+    processPriorities: {
+      low: "Baixa",
+      medium: "Média",
+      high: "Alta"
+    },
+    processDetails: {
+      title: "Detalhes do Processo",
+      viewDetails: "Ver Detalhes",
+      documents: {
+        title: "Documentos do Processo",
+        upload: "Enviar Documento",
+        download: "Baixar Documento",
+        delete: "Excluir Documento",
+        noDocuments: "Nenhum documento enviado",
+        uploadSuccess: "Documento enviado com sucesso",
+        uploadError: "Erro ao enviar documento",
+        deleteSuccess: "Documento excluído com sucesso",
+        deleteError: "Erro ao excluir documento",
+        downloadError: "Erro ao baixar documento",
+        caseNumber: "Número do Processo",
+        court: "Tribunal",
+        judge: "Juiz",
+        opposingParty: "Parte Contrária",
+        amount: "Valor em Disputa"
+      },
+      timeline: {
+        title: "Linha do Tempo do Processo",
+        noEvents: "Nenhum evento registrado",
+        addEvent: "Adicionar Evento",
+        eventDate: "Data do Evento",
+        eventDescription: "Descrição do Evento",
+        eventType: "Tipo de Evento",
+        eventTypes: {
+          hearing: "Audiência",
+          filing: "Petição / Protocolo",
+          deadline: "Prazo",
+          meeting: "Reunião",
+          other: "Outro"
+        }
+      },
+      notes: {
+        title: "Notas do Processo",
+        addNote: "Adicionar Nota",
+        editNote: "Editar Nota",
+        deleteNote: "Excluir Nota",
+        noNotes: "Nenhuma nota disponível",
+        noteContent: "Conteúdo da Nota",
+        noteDate: "Data da Nota",
+        addSuccess: "Nota adicionada com sucesso",
+        editSuccess: "Nota editada com sucesso",
+        deleteSuccess: "Nota excluída com sucesso",
+        addError: "Erro ao adicionar nota",
+        editError: "Erro ao editar nota",
+        deleteError: "Erro ao excluir nota"
+      }
+    },
+
+    // Emergency
+    emergencyTitle: "Sistema de Emergência",
+    emergencyDescription: "Em caso de emergência, pressione o botão para enviar alertas automáticos aos seus contatos de emergência com sua localização atual",
+    emergencyActivate: "Ativar Emergência",
+    emergencyActivateWithVoice: "Emergência com Nota de Voz",
+    sendAlert: "Enviar Alerta",
+    emergencyContacts: "Contatos de Emergência",
+    addContact: "Adicionar Contato",
+    contactName: "Nome do Contato",
+    phoneNumber: "Número de Telefone",
+    relationship: "Parentesco / Relação",
+    location: "Localização",
+    contacts: "Contatos",
+    notifyViaWhatsApp: "Notificar via WhatsApp",
+    relationshipMother: "Mãe",
+    relationshipFather: "Pai",
+    relationshipSibling: "Irmão/Irmã",
+    relationshipPartner: "Parceiro(a) / Cônjuge",
+    relationshipLawyer: "Advogado(a)",
+    relationshipFriend: "Amigo(a)",
+    relationshipOther: "Outro",
+    emergencyConfirmMessage: "Tem certeza de que deseja ativar o alerta de emergência? Sua localização será enviada aos seus contatos de emergência.",
+    sendingAlerts: "ENVIANDO ALERTAS...",
+    alertsSentSuccess: "Alertas enviados com sucesso",
+    locationObtained: "Localização obtida",
+    coordinatesSent: "Coordenadas enviadas",
+    alertSentTo: "Alerta enviado para",
+    viaWhatsApp: "via WhatsApp",
+    emergencyError: "Erro ao enviar alertas. Tente novamente.",
+    emergencyVoiceError: "Erro ao enviar alerta com nota de voz. Tente novamente.",
+    emergencyVoiceDescription: "Grave uma nota de voz explicando sua situação de emergência. Ela será enviada com sua localização para todos os contatos.",
+    emergencyVoiceNote: "Nota de Voz de Emergência",
+    startRecording: "Iniciar Gravação",
+    pressMicrophoneToRecord: "Pressione o microfone para gravar uma nota de voz",
+    maxDuration: "Duração máxima: 1:00",
+    sending: "Enviando...",
+    close: "Fechar",
+    cancel: "Cancelar",
+
+    // Profile & Account
+    personalInformation: "Informações Pessoais",
+    accountInformation: "Informações da Conta",
+    regionalSettings: "Configurações Regionais",
+    notifications: "Notificações",
+    dangerZone: "Zona de Perigo",
+    phone: "Telefone",
+    country: "País",
+    language: "Idioma",
+    emailNotifications: "Notificações por E-mail",
+    registrationDate: "Data de Registro",
+    lastAccess: "Último Acesso",
+    accessMethod: "Método de Acesso",
+    editProfile: "Editar Perfil",
+    saveChanges: "Salvar Alterações",
+    personalInfo: "Informações Pessoais",
+    usageStatistics: "Estatísticas de Uso",
+    consultationsCompleted: "Consultas concluídas",
+    processesStarted: "Processos iniciados",
+    totalTime: "Tempo total",
+    saving: "Salvando...",
+
+    // Common
+    loading: "Carregando...",
+    save: "Salvar",
+    edit: "Editar",
+    delete: "Excluir",
+    submit: "Enviar",
+    search: "Pesquisar",
+    filter: "Filtrar",
+    today: "Hoje",
+    yesterday: "Ontem",
+    thisWeek: "Esta Semana",
+    thisMonth: "Este Mês",
+    back: "Voltar",
+    next: "Próximo",
+    previous: "Anterior",
+    clear: "Limpar",
+    refresh: "Atualizar",
+    confirm: "Confirmar",
+    add: "Adicionar",
+    remove: "Remover",
+    viewAll: "Ver Tudo",
+
+    // Messages & Toasts
+    welcomeUser: "Bem-vindo!",
+    loginSuccess: "Sessão iniciada com sucesso.",
+    accountCreated: "Conta criada!",
+    accountCreatedSuccess: "Sua conta foi criada com sucesso.",
+    profileUpdated: "Perfil atualizado",
+    profileUpdatedSuccess: "Suas informações foram salvas com sucesso.",
+    sessionEnded: "Sessão encerrada",
+    logoutSuccess: "Você saiu com sucesso.",
+    changesSaved: "Alterações salvas com sucesso",
+
+    // Errors
+    required: "Este campo é obrigatório",
+    invalidEmail: "E-mail inválido",
+    passwordTooShort: "A senha deve ter pelo menos 6 caracteres",
+    passwordsDontMatch: "As senhas não coincidem",
+    invalidCredentials: "Credenciais inválidas. Verifique seu e-mail e senha.",
+    userExists: "O usuário já existe",
+    registrationFailed: "Erro ao criar conta. Tente novamente.",
+    loginFailed: "Erro ao entrar. Tente novamente.",
+    profileUpdateFailed: "Não foi possível atualizar o perfil. Tente novamente.",
+    authenticationRequired: "Autenticação necessária",
+    googleAuthFailed: "Erro ao entrar com Google. Tente novamente.",
+    error: "Erro",
+    success: "Sucesso",
+
+    // Data states
+    noConsultations: "Nenhuma consulta recente",
+    noProcesses: "Nenhum processo ativo",
+    noContacts: "Nenhum contato de emergência",
+
+    // Countries
+    countries: {
+      EC: "Equador",
+      CO: "Colômbia",
+      PE: "Peru",
+      BO: "Bolívia",
+      VE: "Venezuela",
+      AR: "Argentina",
+      CL: "Chile",
+      UY: "Uruguai",
+      PY: "Paraguai",
+      US: "Estados Unidos",
+      MX: "México"
+    },
+
+    // Languages
+    languages: {
+      en: "Inglês",
+      es: "Espanhol",
+      pt: "Português"
+    },
+
+    // Legal Consultation Interface
+    welcomeMessage: "Olá! Sou seu assistente jurídico inteligente. Posso ajudar com dúvidas sobre leis, direitos, procedimentos e a constituição do seu país. Como posso ajudar hoje?",
+    legalAssistantWelcome: "Olá! Sou seu assistente jurídico",
+    legalAssistantDescription: "Você pode me consultar sobre direitos, procedimentos legais ou qualquer dúvida jurídica.",
+    quickQuestion1: "Quais são meus direitos trabalhistas básicos?",
+    quickQuestion2: "Como inicio um processo de divórcio?",
+    quickQuestion3: "O que devo fazer se meu salário não for pago?",
+    quickQuestion4: "Quais são os direitos do inquilino?",
+    legalResources: "Recursos Jurídicos",
+    updated: "Atualizada",
+    noActivity: "Ainda não há consultas. Comece fazendo uma pergunta jurídica.",
+
+    // Voice Recorder
+    voiceRecorder: {
+      startRecording: "Iniciar Gravação",
+      resume: "Retomar",
+      pause: "Pausar",
+      stop: "Parar",
+      play: "Reproduzir",
+      delete: "Excluir",
+      send: "Enviar",
+      uploading: "Enviando...",
+      duration: "Duração",
+      recording: "Gravando...",
+      recordingPaused: "Gravação pausada"
     },
   }
 };
