@@ -20,6 +20,18 @@ interface TypeformAuthProps {
   onSwitchToClassic?: () => void;
 }
 
+interface AuthQuestion {
+  id: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  field: string;
+  type: string;
+  placeholder?: string;
+  icon: any;
+  options?: Array<{ label: string; value: string; desc: string }>;
+}
+
 export function TypeformAuth({ initialMode = 'login', onSwitchToClassic }: TypeformAuthProps) {
   const [, setLocation] = useLocation();
   const { login, setLoading, isLoading } = useAuth();
@@ -137,7 +149,7 @@ export function TypeformAuth({ initialMode = 'login', onSwitchToClassic }: Typef
     }
   ], [language]);
 
-  const questions = mode === 'login' ? loginQuestions : registerQuestions;
+  const questions: AuthQuestion[] = mode === 'login' ? loginQuestions : (registerQuestions as AuthQuestion[]);
   const currentQ = questions[currentStep] || questions[0];
   const progressPercent = Math.round(((currentStep + 1) / questions.length) * 100);
 

@@ -7,6 +7,7 @@ import { geminiService } from "../services/gemini";
 import { whatsAppService } from "../services/whatsapp";
 import { emailService } from "../services/email";
 import { voiceService } from "../services/voice";
+import { skillAdapter } from "../services/skill-adapter";
 import { prisma, executeWithRetry } from "../prisma-client";
 import {
   authHashCache,
@@ -419,3 +420,178 @@ citizenRouter.get("/cases", requireAuth, async (req: any, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+/**
+ * Explore Constitutional Articles via Constitute Project
+ */
+citizenRouter.get("/constitution/explore", async (req: any, res) => {
+  try {
+    const country = (req.query.country as string) || "EC";
+    const q = (req.query.q as string) || "derechos fundamentales debido proceso";
+
+    const articles = await constituteService.getRelevantArticles({
+      query: q,
+      country,
+      language: "es",
+      limit: 6
+    });
+
+    const structuredArticles = articles.map((content, idx) => {
+      let title = `Disposición Constitucional ${idx + 1}`;
+      const match = content.match(/(Art[ií]culo\s*\d+[^\.\:\n]*)/i);
+      if (match) {
+        title = match[1].trim();
+      }
+      return {
+        id: `art_${idx + 1}`,
+        title,
+        content
+      };
+    });
+
+    res.json({ articles: structuredArticles });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /constitution/explore:", error);
+    res.status(500).json({ error: "Failed to explore constitution" });
+  }
+});
+
+/**
+ * Explain Constitutional Article in Plain Natural Language
+ */
+citizenRouter.post("/constitution/explain", async (req: any, res) => {
+  try {
+    const { articleText, country = "EC", language = "es" } = req.body;
+    if (!articleText) {
+      return res.status(400).json({ error: "articleText is required" });
+    }
+
+    const prompt = `Eres un mediador legal ciudadano experto y pedagógico de LeFriApp.
+Tu misión es traducir el siguiente artículo o norma constitucional de ${country} a un lenguaje natural, accesible, didáctico y directo para cualquier ciudadano de a pie sin conocimientos jurídicos previos.
+
+Norma Constitucional a Analizar:
+"${articleText}"
+
+Instrucciones de formato:
+1. 🎯 **¿Qué significa este derecho en palabras simples?**: Explica el sentido general en 1 o 2 párrafos concisos sin tecnicismos ni jerga enrevesada.
+2. 🛡️ **¿Cómo te protege en la vida cotidiana?**: Da 2 ejemplos prácticos y cotidianos de situaciones reales donde este derecho entra en juego.
+3. ⚖️ **¿Qué debes hacer si vulneran este derecho?**: Pasos inmediatos y qué garantías o instituciones ciudadanas puedes activar.
+
+Responde en idioma ${language === "en" ? "English" : language === "pt" ? "Português" : "Español"} de manera empática, clara y con formato Markdown limpio.`;
+
+    const explanation = await skillAdapter.generate(prompt);
+    res.json({ explanation });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /constitution/explain:", error);
+    res.status(500).json({ error: "Failed to generate explanation" });
+  }
+});
+
+/**
+ * Generate formal legal document draft
+ */
+citizenRouter.post("/documents/generate", async (req: any, res) => {
+  try {
+    const {
+      type,
+      title,
+      facts,
+      claimantName,
+      claimantId,
+      opposingParty,
+      country = "EC",
+      language = "es",
+      customDetails
+    } = req.body;
+
+    const prompt = `Eres el Agente Especialista en Documentos Legales de LeFriApp.
+Genera una minuta / documento legal formal y completo basado en los siguientes datos:
+- Tipo de Documento: ${type}
+- Título: ${title || 'Escrito Legal Formal'}
+- Compareciente / Actor: ${claimantName || 'CIUDADANO COMPARECIENTE'} (Identificación: ${claimantId || 'N/A'})
+- Parte Contraria / Demandado o Entidad: ${opposingParty || 'PARTE REQUERIDA'}
+- Jurisdicción / País: ${country}
+- Hechos y Antecedentes:
+${facts || 'No se proporcionaron hechos específicos.'}
+${customDetails ? `- Detalles Adicionales: ${customDetails}` : ''}
+
+El documento debe tener la estructura jurídica formal habitual del país (${country}):
+1. Encabezado formal y designación de autoridad u órgano competente.
+2. Generales de ley del solicitante.
+3. Relación clara y numerada de los hechos.
+4. Fundamentos de derecho (Constitución de la República y Códigos pertinentes).
+5. Petición concreta o pretensión.
+6. Notificaciones y firma.
+
+Redacta el texto completo listo para revisión o impresión en formato Markdown limpio.`;
+
+    const documentContent = await skillAdapter.generate(prompt);
+    res.json({
+      title: title || "Documento Legal Redactado",
+      documentContent,
+      createdAt: new Date().toISOString()
+    });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /documents/generate:", error);
+    res.status(500).json({ error: "Failed to generate document" });
+  }
+});
+
+/**
+ * Export Document to PDF
+ */
+citizenRouter.post("/documents/export-pdf", async (req: any, res) => {
+  try {
+    const { title = "Documento Legal", content } = req.body;
+    if (!content) return res.status(400).json({ error: "content is required" });
+
+    // HTML template for PDF conversion
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>${title}</title>
+  <style>
+    body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.6; margin: 40px; color: #111; }
+    h1 { font-size: 16pt; text-align: center; margin-bottom: 20px; }
+    p { margin-bottom: 12px; text-align: justify; }
+    .footer { margin-top: 40px; font-size: 10pt; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>${title}</h1>
+  <div>${content.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</div>
+  <div class="footer">Generado automáticamente por LeFriApp - Asistencia Legal Inteligente</div>
+</body>
+</html>`;
+
+    let browser;
+    try {
+      browser = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'domcontentloaded' });
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        margin: { top: '2.5cm', right: '2.5cm', bottom: '2.5cm', left: '2.5cm' },
+        printBackground: true
+      });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(title)}.pdf"`);
+      return res.send(pdfBuffer);
+    } catch (puppeteerErr) {
+      if (browser) await browser.close();
+      console.warn("[CitizenRouter] Puppeteer fallback, returning html representation:", puppeteerErr);
+      res.setHeader('Content-Type', 'text/html');
+      return res.send(html);
+    }
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /documents/export-pdf:", error);
+    res.status(500).json({ error: "Failed to export PDF" });
+  }
+});
+

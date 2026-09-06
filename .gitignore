@@ -10,3 +10,7 @@ vite.config.ts.*
 .env.deploy
 ai-docs
 attached_assets
+logs/
+.codebase-memory/
+*.log
+

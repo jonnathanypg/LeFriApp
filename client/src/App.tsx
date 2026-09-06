@@ -16,6 +16,8 @@ import Consulta from "@/pages/consulta";
 import Proceso from "@/pages/proceso";
 import Emergencia from "@/pages/emergencia";
 import Profile from "@/pages/profile";
+import Constitucion from "@/pages/constitucion";
+import Documentos from "@/pages/documentos";
 import NotFound from "@/pages/not-found";
 import { ProcessesPage } from "@/pages/processes";
 import { ProcessDetailPage } from "@/pages/process-detail";
@@ -59,7 +61,7 @@ function Router() {
         {user ? (
           user.role === 'admin' ? <Redirect to="/admin/dashboard" /> :
           user.role === 'lawyer' ? <Redirect to="/lawyer/dashboard" /> : 
-          <Redirect to="/citizen/dashboard" />
+          <Redirect to="/dashboard" />
         ) : (
           <LandingHome />
         )}
@@ -84,15 +86,25 @@ function Router() {
         </AuthGuard>
       </Route>
       
-      {/* Protected routes */}
+      {/* Protected routes - User Dashboard restored */}
       <Route path="/dashboard">
         <AuthGuard>
-          {user?.role === 'admin' ? <Redirect to="/admin/dashboard" /> :
-           user?.role === 'lawyer' ? <Redirect to="/lawyer/dashboard" /> : 
-           <Redirect to="/citizen/dashboard" />}
+          <Dashboard />
         </AuthGuard>
       </Route>
       
+      <Route path="/constitucion">
+        <AuthGuard>
+          <Constitucion />
+        </AuthGuard>
+      </Route>
+
+      <Route path="/documentos">
+        <AuthGuard>
+          <Documentos />
+        </AuthGuard>
+      </Route>
+
       <Route path="/consulta">
         <AuthGuard>
           <Consulta />

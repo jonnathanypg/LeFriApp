@@ -7,7 +7,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
-import { MessageSquare, FileText, AlertTriangle, Clock, ArrowRight } from 'lucide-react';
+import { MessageSquare, FileText, AlertTriangle, Clock, ArrowRight, Scale, BookOpen } from 'lucide-react';
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
@@ -41,6 +41,26 @@ export default function Dashboard() {
       buttonColor: 'text-blue-500',
       onClick: () => setLocation('/consulta'),
       buttonText: t.startConsultationButton
+    },
+    {
+      title: t.modeConstitution || "Estudio de Constitución & Derechos",
+      description: t.modeConstitutionDesc || "Explora y estudia artículos constitucionales explicados en lenguaje natural y comprensible.",
+      icon: Scale,
+      iconBg: 'bg-indigo-100',
+      iconColor: 'text-indigo-600',
+      buttonColor: 'text-indigo-600',
+      onClick: () => setLocation('/constitucion'),
+      buttonText: t.exploreConstitutionButton || "Explorar Constitución"
+    },
+    {
+      title: t.modeDocuments || "Redactor de Documentos Legales",
+      description: t.modeDocumentsDesc || "Genera minutas, reclamos por despido y peticiones oficiales guiadas paso a paso.",
+      icon: BookOpen,
+      iconBg: 'bg-emerald-100',
+      iconColor: 'text-emerald-600',
+      buttonColor: 'text-emerald-600',
+      onClick: () => setLocation('/documentos'),
+      buttonText: t.generateDocumentButton || "Redactar Documento"
     },
     {
       title: t.modeProcess,

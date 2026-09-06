@@ -15,8 +15,8 @@ module.exports = {
       env_production: {
         NODE_ENV: 'production',
         PORT: process.env.PORT || 8080,
-        DEFAULT_LLM_PROVIDER: process.env.DEFAULT_LLM_PROVIDER || 'gemini',
-        DEFAULT_LLM_MODEL: process.env.DEFAULT_LLM_MODEL || 'gemini-1.5-flash'
+        DEFAULT_LLM_PROVIDER: process.env.DEFAULT_LLM_PROVIDER || 'openai',
+        DEFAULT_LLM_MODEL: process.env.DEFAULT_LLM_MODEL || 'gpt-4o-mini'
       },
       env_development: {
         NODE_ENV: 'development',

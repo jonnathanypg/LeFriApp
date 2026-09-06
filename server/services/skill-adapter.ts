@@ -153,21 +153,30 @@ export class SkillAdapter {
 
     const systemPrompt = options.systemPrompt || loadSkill('Legal_Assistant.md');
     
+    const isReasoningOrGpt5 = this.primaryModel.startsWith('gpt-5') || this.primaryModel.startsWith('o1') || this.primaryModel.startsWith('o3');
+    
+    const requestBody: any = {
+      model: this.primaryModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ]
+    };
+
+    if (isReasoningOrGpt5) {
+      requestBody.max_completion_tokens = options.maxTokens ?? 2048;
+    } else {
+      requestBody.temperature = options.temperature ?? 0.7;
+      requestBody.max_tokens = options.maxTokens ?? 2048;
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: this.primaryModel,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
-        temperature: options.temperature ?? 0.7,
-        max_tokens: options.maxTokens ?? 2048
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
@@ -188,21 +197,28 @@ export class SkillAdapter {
 
     const systemPrompt = options.systemPrompt || loadSkill('Legal_Assistant.md');
 
+    const isReasoningOrGpt5 = this.primaryModel.startsWith('gpt-5') || this.primaryModel.startsWith('o1') || this.primaryModel.startsWith('o3');
+
+    const requestBody: any = {
+      model: this.primaryModel,
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: prompt }
+      ],
+      stream: true
+    };
+
+    if (!isReasoningOrGpt5) {
+      requestBody.temperature = options.temperature ?? 0.7;
+    }
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${apiKey}`
       },
-      body: JSON.stringify({
-        model: this.primaryModel,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
-        temperature: options.temperature ?? 0.7,
-        stream: true
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
