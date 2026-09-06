@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { 
-  Scale, Shield, HeartHandshake, Sparkles, ArrowRight, CheckCircle2, 
-  ExternalLink, Globe, BookOpen, Users, Lock, ChevronRight, MessageSquare, 
-  Layers, Award, FileText, Activity
+  BookOpen, ShieldCheck, HeartHandshake, Sparkles, ArrowRight, CheckCircle2, 
+  Globe, Users, Lock, ChevronRight, MessageSquare, 
+  Layers, Lightbulb, Compass, Search
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,112 +19,109 @@ export default function LandingHome() {
 
   const heroContent = {
     es: {
-      tag: "INICIATIVA OFICIAL LEGALTECH — FUNDACIÓN UNDERLIFE",
-      h1_main: "Democratizando el Acceso Legal",
-      h1_accent: "con Inteligencia Artificial",
-      sub: "LeFriApp es la plataforma de triaje y orientación jurídica gratuita que transforma el acceso a la justicia en Ecuador y Latinoamérica. Desarrollada por Fundación Underlife para brindar asistencia inmediata y fundamentada a quienes más lo necesitan.",
-      ctaPrimary: "Iniciar Triaje Legal",
-      ctaSecondary: "Portal de Abogados",
-      stats1: "+15,000",
-      stats1Label: "Orientaciones Realizadas",
-      stats2: "+2,300",
-      stats2Label: "Días de Impacto Social",
-      stats3: "100% Gratuito",
-      stats3Label: "Para Ciudadanos",
-      stats4: "Fundación Underlife",
-      stats4Label: "Respaldo Institucional",
-      aboutTitle: "El Vínculo con Fundación Underlife",
-      aboutSub: "Nacida en Milagro, Ecuador, Fundación Underlife (ONG desde 2018) impulsa programas de protección infantil, equidad social y democratización tecnológica de la justicia.",
-      featuresTitle: "¿Cómo funciona LeFriApp?",
-      featuresSub: "Tecnología agéntica de alta precisión orientada a la protección de tus derechos.",
-      f1Title: "Triaje Legal Inmediato",
-      f1Desc: "Expón tu problema en lenguaje natural. Nuestra IA analiza los hechos y tipifica el caso en segundos.",
-      f2Title: "Fundamento Constitucional",
-      f2Desc: "Articulación directa con el Código de Trabajo, COIP, COGEP y la Constitución de la República.",
-      f3Title: "Canalización con Profesionales",
-      f3Desc: "Conexión transparente con abogados verificados y defensores sociales cuando tu caso lo amerita.",
-      faqTitle: "Preguntas Frecuentes (AEO & Guía)",
-      q1: "¿LeFriApp reemplaza a un abogado colegiado?",
-      a1: "No. LeFriApp opera como una plataforma de triaje, educación jurídica y estructuración preliminar de hechos. Brinda la claridad legal que necesitas antes de acudir a las instancias judiciales o contratar representación profesional.",
-      q2: "¿Por qué el servicio es gratuito para la ciudadanía?",
-      a2: "Como parte de los proyectos sociales de Fundación Underlife, creemos que el desconocimiento de las leyes no debe ser una barrera para la dignidad ni para la justicia.",
-      q3: "¿Qué temas legales puedo consultar?",
-      a3: "Derecho laboral (despidos, sueldos impagos), familia (pensión de alimentos, tenencia), civil (contratos, deudas, inquilinato) y orientación en materia penal de urgencia.",
-      footerNote: "LeFriApp es una plataforma desarrollada bajo la visión social de Fundación Underlife.",
-      officialSite: "Visitar fundacionunderlife.org",
-      subdomainNote: "Servicio oficial operando en lefri.fundacionunderlife.org"
+      tag: "CONOCE TUS DERECHOS — COMPRENSIÓN CIUDADANA",
+      h1_main: "Entiende la Constitución",
+      h1_accent: "de forma fácil, clara y humana",
+      sub: "La principal razón por la que se vulneran nuestros derechos es no conocerlos. LeFriApp traduce cada artículo constitucional a un lenguaje sencillo para que comprendas qué te ampara en tu día a día.",
+      ctaPrimary: "Conocer mis Derechos",
+      ctaSecondary: "Explorar la Constitución",
+      stats1: "100%",
+      stats1Label: "Lenguaje Ciudadano",
+      stats2: "+400",
+      stats2Label: "Artículos Explicados",
+      stats3: "Gratuito",
+      stats3Label: "Para Todas las Personas",
+      stats4: "Paso a Paso",
+      stats4Label: "Guías Comprensibles",
+      whyTitle: "¿Por qué creamos LeFriApp?",
+      whySub: "Las leyes y la Constitución son de todos, pero el lenguaje técnico y enredado las ha alejado de quienes más las necesitan. Saber cuáles son tus derechos es el primer paso para evitar que sean vulnerados.",
+      featuresTitle: "¿Cómo te ayuda LeFriApp?",
+      featuresSub: "Herramientas diseñadas para que cualquier persona, sin importar su formación, entienda sus derechos en minutos.",
+      f1Title: "Sin Tecnicismos Jurídicos",
+      f1Desc: "Escribe tu duda en tus propias palabras. La plataforma te explica de manera directa qué principios y derechos te protegen.",
+      f2Title: "La Constitución Explicada",
+      f2Desc: "Desglosamos artículo por artículo con ejemplos de la vida real: trabajo, salud, familia, vivienda y libertad.",
+      f3Title: "Respuestas Preventivas",
+      f3Desc: "Aprende qué hacer antes de que una injusticia ocurra, conociendo con claridad qué límites tienen las autoridades y empleadores.",
+      faqTitle: "Preguntas Frecuentes",
+      q1: "¿Por qué es importante conocer la Constitución?",
+      a1: "Porque la Constitución es la norma suprema que garantiza tu dignidad, tu trabajo, tu intimidad y tu familia. Cuando desconoces lo que dice, es más fácil que alguien abuse de esa falta de información.",
+      q2: "¿Necesito tener conocimientos de derecho para usar la plataforma?",
+      a2: "En lo absoluto. Toda la plataforma está pensada para el ciudadano común. Eliminamos la jerga compleja y usamos analogías y explicaciones cotidianas.",
+      q3: "¿Tiene algún costo consultar la Constitución y mis derechos?",
+      a3: "No. El acceso a la educación cívica y al entendimiento de la Constitución es y será siempre libre y gratuito para todas las personas.",
+      footerNote: "Plataforma ciudadana para el aprendizaje y comprensión de los derechos humanos y constitucionales.",
+      footerRights: "Todos los derechos reservados."
     },
     en: {
-      tag: "OFFICIAL LEGALTECH INITIATIVE — UNDERLIFE FOUNDATION",
-      h1_main: "Democratizing Legal Access",
-      h1_accent: "with Artificial Intelligence",
-      sub: "LeFriApp is the free legal triage and guidance platform transforming access to justice across Ecuador and Latin America. Built by Underlife Foundation to deliver immediate, constitutionally grounded orientation to those who need it most.",
-      ctaPrimary: "Start Legal Triage",
-      ctaSecondary: "Lawyer Portal",
-      stats1: "+15,000",
-      stats1Label: "Consultations Completed",
-      stats2: "+2,300",
-      stats2Label: "Days of Social Impact",
-      stats3: "100% Free",
-      stats3Label: "For Citizens",
-      stats4: "Underlife Foundation",
-      stats4Label: "Institutional Backing",
-      aboutTitle: "Our Foundation & Roots",
-      aboutSub: "Founded in Milagro, Ecuador, Underlife Foundation (NGO since 2018) leads community programs in child protection, social equity, and technological access to justice.",
-      featuresTitle: "How LeFriApp Works",
-      featuresSub: "High-precision agentic technology dedicated to protecting citizen rights.",
-      f1Title: "Immediate Legal Triage",
-      f1Desc: "State your situation in plain words. Our AI parses the facts and identifies legal grounds in seconds.",
-      f2Title: "Constitutional Grounding",
-      f2Desc: "Direct citation and reference to Labor Codes, Criminal, Civil procedures and National Constitutions.",
-      f3Title: "Professional Referrals",
-      f3Desc: "Seamless matching with verified attorneys and pro-bono advocates when your case demands court filing.",
+      tag: "KNOW YOUR RIGHTS — CITIZEN EMPOWERMENT",
+      h1_main: "Understand the Constitution",
+      h1_accent: "in simple, clear, and human terms",
+      sub: "The primary reason our rights are violated is not knowing them. LeFriApp breaks down constitutional articles into everyday language so you always know what protects you in daily life.",
+      ctaPrimary: "Learn My Rights",
+      ctaSecondary: "Explore Constitution",
+      stats1: "100%",
+      stats1Label: "Plain Language",
+      stats2: "+400",
+      stats2Label: "Articles Explained",
+      stats3: "Free",
+      stats3Label: "For Everyone",
+      stats4: "Step by Step",
+      stats4Label: "Easy-to-follow Guides",
+      whyTitle: "Why did we build LeFriApp?",
+      whySub: "The laws and the Constitution belong to everyone, but complex legal terminology has kept them out of reach. Knowing your rights is the first and most essential step to defend them.",
+      featuresTitle: "How LeFriApp Helps You",
+      featuresSub: "Tools designed so anyone can understand their fundamental rights in minutes, regardless of background.",
+      f1Title: "No Legal Jargon",
+      f1Desc: "Ask in your everyday words. The platform explains clearly what constitutional principles protect you.",
+      f2Title: "Constitutions Explained",
+      f2Desc: "We break down article by article with real-life examples: labor, healthcare, family, housing, and liberty.",
+      f3Title: "Preventive Awareness",
+      f3Desc: "Learn what steps to take before injustices occur, understanding clearly what authorities and employers cannot do.",
       faqTitle: "Frequently Asked Questions",
-      q1: "Does LeFriApp replace a licensed attorney?",
-      a1: "No. LeFriApp serves strictly as an intake triage, legal education, and case structuring system. It equips citizens with essential facts and laws before formal representation.",
-      q2: "Why is this service free for citizens?",
-      a2: "As part of Underlife Foundation's social mission, legal lack of information must never prevent people from defending their basic human rights.",
-      q3: "Which legal fields can I explore?",
-      a3: "Labor law (wrongful dismissal, unpaid wages), family law (child support, custody), contracts, tenant law, and emergency criminal orientation.",
-      footerNote: "LeFriApp is operated under the social mission of Underlife Foundation.",
-      officialSite: "Visit fundacionunderlife.org",
-      subdomainNote: "Official service running on lefri.fundacionunderlife.org"
+      q1: "Why is it important to know the Constitution?",
+      a1: "Because the Constitution is the supreme foundation that guarantees your dignity, work, privacy, and family. When you don't know what it contains, rights are vulnerable to being overlooked.",
+      q2: "Do I need legal knowledge to use this platform?",
+      a2: "Not at all. The entire platform is built for everyday citizens. We eliminate legalistic vocabulary and deliver friendly, straightforward explanations.",
+      q3: "Does it cost anything to use?",
+      a3: "No. Access to constitutional literacy and understanding your fundamental rights is completely free for everyone.",
+      footerNote: "Citizen platform for learning and understanding human and constitutional rights.",
+      footerRights: "All rights reserved."
     },
     pt: {
-      tag: "INICIATIVA OFICIAL LEGALTECH — FUNDAÇÃO UNDERLIFE",
-      h1_main: "Democratizando o Acesso Jurídico",
-      h1_accent: "com Inteligência Artificial",
-      sub: "LeFriApp é a plataforma gratuita de triagem e orientação jurídica que transforma o acesso à justiça no Equador e América Latina. Desenvolvida pela Fundação Underlife para fornecer assistência imediata e fundamentada na lei a quem mais precisa.",
-      ctaPrimary: "Iniciar Triagem Jurídica",
-      ctaSecondary: "Portal de Advogados",
-      stats1: "+15.000",
-      stats1Label: "Orientações Realizadas",
-      stats2: "+2.300",
-      stats2Label: "Dias de Impacto Social",
-      stats3: "100% Gratuito",
-      stats3Label: "Para Cidadãos",
-      stats4: "Fundação Underlife",
-      stats4Label: "Apoio Institucional",
-      aboutTitle: "Nosso Vínculo com a Fundação Underlife",
-      aboutSub: "Nascida no Equador, a Fundação Underlife (ONG desde 2018) lidera projetos de proteção infantil, equidade comunitária e democratização tecnológica da justiça.",
-      featuresTitle: "Como Funciona o LeFriApp?",
-      featuresSub: "Tecnologia agêntica de alta precisão dedicada à salvaguarda de direitos.",
-      f1Title: "Triagem Jurídica Imediata",
-      f1Desc: "Descreva sua situação em linguagem simples. Nossa IA analisa os fatos e identifica enquadramentos legais em segundos.",
-      f2Title: "Fundamentação Constitucional",
-      f2Desc: "Articulação direta com leis trabalhistas, códigos civis, penais e normas constitucionais.",
-      f3Title: "Conexão com Especialistas",
-      f3Desc: "Encaminhamento seguro para advogados verificados e apoio comunitário quando seu caso exige ação judicial.",
-      faqTitle: "Perguntas Frequentes (FAQ)",
-      q1: "O LeFriApp substitui um advogado constituído?",
-      a1: "Não. O LeFriApp atua estritamente como um sistema de triagem, conscientização jurídica e estruturação de fatos antes da representação forense.",
-      q2: "Por que a plataforma é gratuita?",
-      a2: "Como parte das iniciativas sociais da Fundação Underlife, acreditamos que a falta de informação jurídica não deve ser uma barreira à dignidade e à justiça.",
-      q3: "Quais áreas do direito posso consultar?",
-      a3: "Direito do trabalho (demissões, salários atrasados), família (pensão alimentícia, guarda), contratos, locação e orientações de emergência.",
-      footerNote: "LeFriApp é uma iniciativa oficial vinculada à Fundação Underlife.",
-      officialSite: "Acessar fundacionunderlife.org",
-      subdomainNote: "Serviço oficial operando em lefri.fundacionunderlife.org"
+      tag: "CONHEÇA SEUS DIREITOS — EMPODERAMENTO CIDADÃO",
+      h1_main: "Entenda a Constituição",
+      h1_accent: "de forma simples, clara e humana",
+      sub: "A principal razão pela qual nossos direitos são violados é não conhecê-los. O LeFriApp traduz cada artigo constitucional em linguagem acessível para que você compreenda o que o protege no dia a dia.",
+      ctaPrimary: "Conhecer Meus Direitos",
+      ctaSecondary: "Explorar a Constituição",
+      stats1: "100%",
+      stats1Label: "Linguagem Cidadã",
+      stats2: "+400",
+      stats2Label: "Artigos Explicados",
+      stats3: "Gratuito",
+      stats3Label: "Para Todos",
+      stats4: "Passo a Passo",
+      stats4Label: "Guias Claros",
+      whyTitle: "Por que criamos o LeFriApp?",
+      whySub: "As leis e a Constituição pertencem a todos, mas a linguagem jurídica técnica as afastou de quem mais precisa. Conhecer seus direitos é o primeiro passo para não permitir que sejam violados.",
+      featuresTitle: "Como o LeFriApp Ajuda Você",
+      featuresSub: "Ferramentas pensadas para que qualquer pessoa compreenda seus direitos em minutos.",
+      f1Title: "Sem Termos Complicados",
+      f1Desc: "Descreva sua dúvida com suas próprias palavras. A plataforma explica diretamente o que a lei garante.",
+      f2Title: "Constituição Explicada",
+      f2Desc: "Artigo por artigo explicado com exemplos do cotidiano: trabalho, saúde, família, moradia e liberdade.",
+      f3Title: "Orientação Preventiva",
+      f3Desc: "Saiba o que fazer antes de sofrer uma injustiça, conhecendo com clareza os limites de autoridades e empregadores.",
+      faqTitle: "Perguntas Frequentes",
+      q1: "Por que é importante conhecer a Constituição?",
+      a1: "Porque a Constituição é a norma máxima que protege sua dignidade, trabalho e família. Desconhecer seus direitos facilita que sejam desrespeitados.",
+      q2: "Preciso entender de leis para usar?",
+      a2: "De forma alguma. Toda a plataforma foi criada para o cidadão comum, traduzindo termos difíceis em explicações práticas.",
+      q3: "Tem algum custo?",
+      a3: "Não. O acesso à educação cidadã e ao entendimento da Constituição é totalmente livre e gratuito.",
+      footerNote: "Plataforma cidadã para aprendizagem e compreensão dos direitos fundamentais.",
+      footerRights: "Todos os direitos reservados."
     }
   };
 
@@ -136,18 +133,18 @@ export default function LandingHome() {
       <header className="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <Scale className="w-5 h-5 text-white" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-teal-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-bold text-lg tracking-tight text-white">LeFriApp</span>
-                <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider border-indigo-500/40 text-indigo-400 bg-indigo-500/10">
-                  LegalTech
+                <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider border-teal-500/40 text-teal-300 bg-teal-500/10">
+                  Constitución y Derechos
                 </Badge>
               </div>
-              <p className="text-[11px] text-slate-400 font-mono hidden sm:block">
-                lefri.fundacionunderlife.org
+              <p className="text-[11px] text-slate-400 font-sans hidden sm:block">
+                Educación cívica y comprensión de derechos fundamentales
               </p>
             </div>
           </div>
@@ -184,7 +181,7 @@ export default function LandingHome() {
               onClick={() => setLocation('/login')}
               className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs sm:text-sm shadow-md shadow-indigo-600/25"
             >
-              {language === 'en' ? 'Access Platform' : language === 'pt' ? 'Acessar Plataforma' : 'Acceder al Portal'}
+              {language === 'en' ? 'Sign In' : language === 'pt' ? 'Entrar' : 'Ingresar'}
             </Button>
           </div>
         </div>
@@ -193,17 +190,17 @@ export default function LandingHome() {
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-12 pb-20 sm:pt-20 sm:pb-28 border-b border-slate-800/60">
         {/* Subtle radial glow */}
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-indigo-600/15 blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-teal-600/15 blur-[120px] rounded-full pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/25 text-indigo-300 text-xs font-medium tracking-wide mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400 animate-pulse" />
+          <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-teal-500/10 border border-teal-500/25 text-teal-300 text-xs font-medium tracking-wide mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-teal-400" />
             <span>{c.tag}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight sm:leading-none mb-6">
             {c.h1_main} <br className="hidden sm:inline" />
-            <span className="bg-gradient-to-r from-indigo-400 via-sky-300 to-teal-300 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-teal-300 via-sky-300 to-indigo-300 bg-clip-text text-transparent">
               {c.h1_accent}
             </span>
           </h1>
@@ -216,7 +213,7 @@ export default function LandingHome() {
             <Button
               size="lg"
               onClick={() => setLocation('/login?mode=register')}
-              className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-semibold px-8 py-6 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2 text-base transition-all hover:scale-[1.02]"
+              className="w-full sm:w-auto bg-gradient-to-r from-teal-500 to-indigo-600 hover:from-teal-400 hover:to-indigo-500 text-white font-semibold px-8 py-6 rounded-xl shadow-lg shadow-teal-500/25 flex items-center justify-center space-x-2 text-base transition-all hover:scale-[1.02]"
             >
               <span>{c.ctaPrimary}</span>
               <ArrowRight className="w-5 h-5" />
@@ -225,8 +222,9 @@ export default function LandingHome() {
               variant="outline"
               size="lg"
               onClick={() => setLocation('/login')}
-              className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-medium px-6 py-6 rounded-xl text-base"
+              className="w-full sm:w-auto border-slate-700 bg-slate-900/60 hover:bg-slate-800 text-slate-200 font-medium px-6 py-6 rounded-xl text-base flex items-center justify-center space-x-2"
             >
+              <Search className="w-4 h-4 text-teal-400" />
               <span>{c.ctaSecondary}</span>
             </Button>
           </div>
@@ -253,39 +251,34 @@ export default function LandingHome() {
         </div>
       </section>
 
-      {/* Underlife Foundation Institutional Card */}
+      {/* Purpose / Philosophy Card */}
       <section className="py-16 bg-slate-900/30 border-b border-slate-800/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 rounded-2xl border border-indigo-500/20 p-8 sm:p-12 relative overflow-hidden">
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 rounded-2xl border border-teal-500/20 p-8 sm:p-12 relative overflow-hidden">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center space-x-2 text-indigo-400 text-xs font-semibold uppercase tracking-wider mb-3">
-                <HeartHandshake className="w-4 h-4" />
-                <span>Ecosistema Solidario</span>
+              <div className="inline-flex items-center space-x-2 text-teal-400 text-xs font-semibold uppercase tracking-wider mb-3">
+                <Compass className="w-4 h-4" />
+                <span>Nuestra Misión</span>
               </div>
               <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-                {c.aboutTitle}
+                {c.whyTitle}
               </h2>
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed mb-6">
-                {c.aboutSub}
+                {c.whySub}
               </p>
-              <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400">
+              <div className="flex flex-wrap items-center gap-4 text-xs font-sans text-slate-300">
                 <span className="flex items-center space-x-1.5 bg-slate-800/80 px-3 py-1.5 rounded-md border border-slate-700">
                   <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                  <span>ONG Registrada Ecuador</span>
+                  <span>Sin costo para el usuario</span>
                 </span>
                 <span className="flex items-center space-x-1.5 bg-slate-800/80 px-3 py-1.5 rounded-md border border-slate-700">
                   <CheckCircle2 className="w-4 h-4 text-teal-400" />
-                  <span>Subdominio lefri.fundacionunderlife.org</span>
+                  <span>Enfocado en prevención y dignidad</span>
                 </span>
-                <a 
-                  href="https://fundacionunderlife.org" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="flex items-center space-x-1 text-indigo-400 hover:text-indigo-300 underline font-sans text-xs ml-auto"
-                >
-                  <span>{c.officialSite}</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <span className="flex items-center space-x-1.5 bg-slate-800/80 px-3 py-1.5 rounded-md border border-slate-700">
+                  <CheckCircle2 className="w-4 h-4 text-teal-400" />
+                  <span>Basado en la Carta Magna</span>
+                </span>
               </div>
             </div>
           </div>
@@ -304,15 +297,15 @@ export default function LandingHome() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-              <Activity className="w-6 h-6" />
+          <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all group">
+            <div className="w-12 h-12 rounded-xl bg-teal-600/10 border border-teal-500/20 flex items-center justify-center text-teal-400 mb-5 group-hover:bg-teal-600 group-hover:text-white transition-colors">
+              <Lightbulb className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">{c.f1Title}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">{c.f1Desc}</p>
           </div>
 
-          <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all group">
+          <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all group">
             <div className="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
               <BookOpen className="w-6 h-6" />
             </div>
@@ -320,9 +313,9 @@ export default function LandingHome() {
             <p className="text-slate-400 text-sm leading-relaxed">{c.f2Desc}</p>
           </div>
 
-          <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-indigo-500/40 transition-all group">
-            <div className="w-12 h-12 rounded-xl bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 mb-5 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-              <Users className="w-6 h-6" />
+          <div className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 hover:border-teal-500/40 transition-all group">
+            <div className="w-12 h-12 rounded-xl bg-sky-600/10 border border-sky-500/20 flex items-center justify-center text-sky-400 mb-5 group-hover:bg-sky-600 group-hover:text-white transition-colors">
+              <ShieldCheck className="w-6 h-6" />
             </div>
             <h3 className="text-xl font-bold text-white mb-2">{c.f3Title}</h3>
             <p className="text-slate-400 text-sm leading-relaxed">{c.f3Desc}</p>
@@ -330,7 +323,7 @@ export default function LandingHome() {
         </div>
       </section>
 
-      {/* FAQ Structured Section for SEO / AEO / GEO */}
+      {/* FAQ Structured Section */}
       <section className="py-16 bg-slate-900/40 border-t border-b border-slate-800/80">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
@@ -338,14 +331,14 @@ export default function LandingHome() {
               {c.faqTitle}
             </h2>
             <p className="text-slate-400 text-sm">
-              Respuestas directas y claras preparadas para motores generativos de búsqueda.
+              Conocer tus derechos es el primer paso para vivirlos con tranquilidad.
             </p>
           </div>
 
           <div className="space-y-6">
             <div className="bg-slate-900/80 p-6 rounded-xl border border-slate-800">
               <h3 className="text-lg font-semibold text-white mb-2 flex items-start space-x-2">
-                <span className="text-indigo-400">Q:</span>
+                <span className="text-teal-400">Q:</span>
                 <span>{c.q1}</span>
               </h3>
               <p className="text-slate-300 text-sm leading-relaxed pl-6">
@@ -355,7 +348,7 @@ export default function LandingHome() {
 
             <div className="bg-slate-900/80 p-6 rounded-xl border border-slate-800">
               <h3 className="text-lg font-semibold text-white mb-2 flex items-start space-x-2">
-                <span className="text-indigo-400">Q:</span>
+                <span className="text-teal-400">Q:</span>
                 <span>{c.q2}</span>
               </h3>
               <p className="text-slate-300 text-sm leading-relaxed pl-6">
@@ -365,7 +358,7 @@ export default function LandingHome() {
 
             <div className="bg-slate-900/80 p-6 rounded-xl border border-slate-800">
               <h3 className="text-lg font-semibold text-white mb-2 flex items-start space-x-2">
-                <span className="text-indigo-400">Q:</span>
+                <span className="text-teal-400">Q:</span>
                 <span>{c.q3}</span>
               </h3>
               <p className="text-slate-300 text-sm leading-relaxed pl-6">
@@ -381,19 +374,16 @@ export default function LandingHome() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center space-x-3 text-center md:text-left">
             <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-              <Scale className="w-4 h-4" />
+              <BookOpen className="w-4 h-4" />
             </div>
             <div>
               <p className="text-sm font-semibold text-white">LeFriApp</p>
-              <p className="text-xs text-slate-400">{c.subdomainNote}</p>
+              <p className="text-xs text-slate-400">{c.footerNote}</p>
             </div>
           </div>
 
           <div className="text-center md:text-right text-xs text-slate-400 space-y-1">
-            <p>{c.footerNote}</p>
-            <p className="text-slate-400">
-              Fundación Underlife &copy; 2018 - 2026. Todos los derechos reservados.
-            </p>
+            <p>LeFriApp &copy; 2026. {c.footerRights}</p>
           </div>
         </div>
       </footer>
