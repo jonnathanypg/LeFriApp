@@ -19,6 +19,7 @@ export const requireAdmin = async (req: any, res: any, next: any) => {
 adminRouter.get("/config", requireAdmin, async (req, res) => {
   try {
     const telegramTokenConfig = await storage.getSystemConfig('b2c_telegram_token');
+    const i18nConfig = await storage.getSystemConfig('internationalization_enabled');
 
     const waStatus = WhatsAppManager.getConnectionStatus('SYSTEM_B2C');
 
@@ -32,6 +33,7 @@ adminRouter.get("/config", requireAdmin, async (req, res) => {
 
     res.json({
       telegramToken: telegramTokenConfig ? telegramTokenConfig.value : "",
+      internationalizationEnabled: i18nConfig ? Boolean(i18nConfig.value) : false,
       whatsappStatus: waStatus,
       stats: { totalUsers, totalCitizens, totalLawyers, totalFirms, totalLeads, totalCases, totalConversations }
     });
@@ -42,7 +44,7 @@ adminRouter.get("/config", requireAdmin, async (req, res) => {
 
 adminRouter.post("/config", requireAdmin, async (req, res) => {
   try {
-    const { telegramToken } = req.body;
+    const { telegramToken, internationalizationEnabled } = req.body;
     if (telegramToken !== undefined) {
       await storage.updateSystemConfig('b2c_telegram_token', telegramToken);
       if (telegramToken) {
@@ -53,6 +55,9 @@ adminRouter.post("/config", requireAdmin, async (req, res) => {
       } else {
         await telegramService.deleteWebhook();
       }
+    }
+    if (internationalizationEnabled !== undefined) {
+      await storage.updateSystemConfig('internationalization_enabled', Boolean(internationalizationEnabled));
     }
     res.json({ success: true });
   } catch (error: any) {

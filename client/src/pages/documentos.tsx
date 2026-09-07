@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Navbar } from '@/components/navbar';
 import { VoiceRecorder } from '@/components/voice-recorder';
 import { useAuth } from '@/hooks/use-auth';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslations } from '@/lib/i18n';
 import { 
   FileText, Sparkles, Download, ExternalLink, Copy, Check, 
   Briefcase, AlertCircle, ShieldAlert, Users, MessageSquare, Mic, ArrowRight
@@ -25,6 +27,17 @@ const DOCUMENT_TYPES = [
 
 export default function DocumentosPage() {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const t = useTranslations(language);
+
+  const DOCUMENT_TYPES = [
+    { id: 'laboral_despido', title: t.docTypeLabor || 'Reclamo por Despido Intempestivo / Liquidación', category: t.docTypeLaborCat || 'Laboral', icon: Briefcase },
+    { id: 'reclamo_consumidor', title: t.docTypeConsumer || 'Reclamo Administrativo del Consumidor / Cobros Indebidos', category: t.docTypeConsumerCat || 'Consumo', icon: AlertCircle },
+    { id: 'derecho_peticion', title: t.docTypePetition || 'Oficio Formal de Derecho de Petición / Acceso a la Información', category: t.docTypePetitionCat || 'Público', icon: FileText },
+    { id: 'denuncia_general', title: t.docTypeComplaint || 'Minuta de Denuncia o Noticia Criminis', category: t.docTypeComplaintCat || 'Penal', icon: ShieldAlert },
+    { id: 'pension_alimentos', title: t.docTypeChildSupport || 'Solicitud / Oficio de Fijación o Aumento de Alimentos', category: t.docTypeChildSupportCat || 'Familia', icon: Users },
+  ];
+
   const [selectedType, setSelectedType] = useState('laboral_despido');
   const [claimantName, setClaimantName] = useState(user?.name || '');
   const [claimantId, setClaimantId] = useState('');
@@ -50,7 +63,7 @@ export default function DocumentosPage() {
           claimantId,
           opposingParty,
           country,
-          language: user?.language || 'es',
+          language: language || user?.language || 'es',
           customDetails
         })
       });
@@ -60,13 +73,13 @@ export default function DocumentosPage() {
     onSuccess: (data) => {
       setGeneratedDoc(data);
       toast({
-        title: "¡Documento redactado con éxito!",
-        description: "Revisa el borrador legal a la derecha para descargarlo o exportarlo."
+        title: t.docGeneratedSuccess || "¡Documento redactado con éxito!",
+        description: t.docGeneratedSuccessDesc || "Revisa el borrador legal a la derecha para descargarlo o exportarlo."
       });
     },
     onError: (err: any) => {
       toast({
-        title: "Error",
+        title: t.error || "Error",
         description: err.message || "No se pudo generar el documento.",
         variant: "destructive"
       });
@@ -76,8 +89,8 @@ export default function DocumentosPage() {
   const handleVoiceTranscription = (text: string) => {
     setFacts(prev => prev ? `${prev}\n${text}` : text);
     toast({
-      title: "Audio transcrito",
-      description: "Los hechos dictados se han añadido a la descripción."
+      title: t.audioTranscribed || "Audio transcrito",
+      description: t.audioTranscribedDesc || "Los hechos dictados se han añadido a la descripción."
     });
   };
 
@@ -86,7 +99,7 @@ export default function DocumentosPage() {
     navigator.clipboard.writeText(generatedDoc.documentContent);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
-    toast({ title: "Copiado", description: "Borrador legal copiado al portapapeles." });
+    toast({ title: t.docCopied || "Copiado", description: t.explanationCopied || "Borrador legal copiado al portapapeles." });
   };
 
   const handleExportGoogleDocs = () => {
@@ -121,9 +134,9 @@ export default function DocumentosPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      toast({ title: "Descargado", description: "Documento PDF generado exitosamente." });
+      toast({ title: t.success || "Descargado", description: "Documento PDF generado exitosamente." });
     } catch (err: any) {
-      toast({ title: "Error", description: "No se pudo generar el PDF.", variant: "destructive" });
+      toast({ title: t.error || "Error", description: "No se pudo generar el PDF.", variant: "destructive" });
     } finally {
       setIsExportingPdf(false);
     }
@@ -141,11 +154,11 @@ export default function DocumentosPage() {
               <FileText className="w-5 h-5" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
-              Estudio de Borradores de Documentos, Oficios y Denuncias
+              {t.documentsTitle || "Estudio de Borradores de Documentos, Oficios y Denuncias"}
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-400">
-            Redacta en segundos cartas, oficios formales, peticiones y minutas legales con fundamentos normativos listos para exportar a PDF y Google Docs.
+            {t.documentsSubtitle || "Redacta en segundos cartas, oficios formales, peticiones y minutas legales con fundamentos normativos listos para exportar a PDF y Google Docs."}
           </p>
         </div>
 
@@ -154,9 +167,9 @@ export default function DocumentosPage() {
           <div className="lg:col-span-6 space-y-6">
             <Card className="bg-slate-900 border-slate-800 rounded-2xl">
               <CardHeader className="p-5 border-b border-slate-800">
-                <CardTitle className="text-base text-white">1. Tipo de Documento Legal</CardTitle>
+                <CardTitle className="text-base text-white">{t.docStep1Title || "1. Tipo de Documento Legal"}</CardTitle>
                 <CardDescription className="text-xs text-slate-400">
-                  Selecciona la plantilla legal adecuada para tu caso.
+                  {t.docStep1Subtitle || "Selecciona la plantilla legal adecuada para tu caso."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-5 space-y-3">
@@ -189,73 +202,86 @@ export default function DocumentosPage() {
 
             <Card className="bg-slate-900 border-slate-800 rounded-2xl">
               <CardHeader className="p-5 border-b border-slate-800">
-                <CardTitle className="text-base text-white">2. Datos del Compareciente y Hechos</CardTitle>
+                <CardTitle className="text-base text-white">{t.docStep2Title || "2. Datos del Compareciente y Hechos"}</CardTitle>
                 <CardDescription className="text-xs text-slate-400">
-                  Ingresa los detalles para que la IA estructure el escrito con precisión.
+                  {t.docStep2Subtitle || "Ingresa los detalles para que la IA estructure el escrito con precisión."}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-5 space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="text-xs font-medium text-slate-300 block mb-1">Nombre Completo del Solicitante</label>
+                    <label className="text-xs font-medium text-slate-300 block mb-1">
+                      {t.claimantFullName || "Nombre Completo del Solicitante"}
+                    </label>
                     <Input
                       value={claimantName}
                       onChange={(e) => setClaimantName(e.target.value)}
-                      placeholder="Ej: Juan Carlos Pérez"
+                      placeholder={t.claimantFullNamePlaceholder || "Ej: Juan Carlos Pérez"}
                       className="bg-slate-950 border-slate-800 text-slate-100 text-xs rounded-xl"
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-medium text-slate-300 block mb-1">C.I. / DNI / Pasaporte</label>
+                    <label className="text-xs font-medium text-slate-300 block mb-1">
+                      {t.claimantIdNumber || "C.I. / DNI / Pasaporte"}
+                    </label>
                     <Input
                       value={claimantId}
                       onChange={(e) => setClaimantId(e.target.value)}
-                      placeholder="Ej: 1720394821"
+                      placeholder={t.claimantIdPlaceholder || "Ej: 1720394821"}
                       className="bg-slate-950 border-slate-800 text-slate-100 text-xs rounded-xl"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-slate-300 block mb-1">Empresa, Institución o Persona Reclamada</label>
+                  <label className="text-xs font-medium text-slate-300 block mb-1">
+                    {t.opposingPartyLabel || "Empresa, Institución o Persona Reclamada"}
+                  </label>
                   <Input
                     value={opposingParty}
                     onChange={(e) => setOpposingParty(e.target.value)}
-                    placeholder="Ej: Banco Nacional / Empresa Constructora / Ex-Cónyuge"
+                    placeholder={t.opposingPartyPlaceholder || "Ej: Banco Nacional / Empresa Constructora / Ex-Cónyuge"}
                     className="bg-slate-950 border-slate-800 text-slate-100 text-xs rounded-xl"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center justify-between mb-1">
-                    <label className="text-xs font-medium text-slate-300">Hechos y Antecedentes (Narrativa)</label>
-                    <span className="text-[10px] text-slate-400">Escribe o dicta por voz</span>
+                    <label className="text-xs font-medium text-slate-300">
+                      {t.factsNarrative || "Hechos y Antecedentes (Narrativa)"}
+                    </label>
+                    <span className="text-[10px] text-slate-400">
+                      {t.factsWriteOrDictate || "Escribe o dicta por voz"}
+                    </span>
                   </div>
                   <Textarea
                     rows={4}
                     value={facts}
                     onChange={(e) => setFacts(e.target.value)}
-                    placeholder="Detalla lo sucedido: fechas de ingreso o despido, montos adeudados, cláusulas no respetadas..."
+                    placeholder={t.factsPlaceholder || "Detalla lo sucedido: fechas de ingreso o despido, montos adeudados, cláusulas no respetadas..."}
                     className="bg-slate-950 border-slate-800 text-slate-100 text-xs rounded-xl resize-none"
                   />
                 </div>
 
                 {/* Voice Dictation Button */}
-                <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex items-center justify-between">
+                <div className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="text-xs text-slate-400 flex items-center space-x-2">
-                    <Mic className="w-4 h-4 text-red-400" />
-                    <span>Dictado de hechos por voz (MediaSuite STT):</span>
+                    <Mic className="w-4 h-4 text-rose-400" />
+                    <span>{t.voiceDictationLabel || "Dictado de hechos por voz (MediaSuite STT):"}</span>
                   </div>
-                  <VoiceRecorder onRecordingComplete={(blob) => {
-                    const formData = new FormData();
-                    formData.append('file', blob, 'facts_voice.webm');
-                    fetch('/api/citizen/transcribe', { method: 'POST', body: formData })
-                      .then(r => r.json())
-                      .then(data => {
-                        if (data.text) handleVoiceTranscription(data.text);
-                      })
-                      .catch(err => console.error('Dictation error:', err));
-                  }} />
+                  <VoiceRecorder 
+                    compact={true}
+                    onRecordingComplete={(blob) => {
+                      const formData = new FormData();
+                      formData.append('file', blob, 'facts_voice.webm');
+                      fetch('/api/citizen/transcribe', { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(data => {
+                          if (data.text) handleVoiceTranscription(data.text);
+                        })
+                        .catch(err => console.error('Dictation error:', err));
+                    }} 
+                  />
                 </div>
 
                 <Button
@@ -266,12 +292,12 @@ export default function DocumentosPage() {
                   {generateMutation.isPending ? (
                     <span className="flex items-center space-x-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Redactando Documento Legal con IA...</span>
+                      <span>{t.btnGeneratingDoc || "Redactando Documento Legal con IA..."}</span>
                     </span>
                   ) : (
                     <span className="flex items-center space-x-2">
                       <Sparkles className="w-4 h-4" />
-                      <span>Generar Borrador Formal</span>
+                      <span>{t.btnGenerateDoc || "Generar Borrador Formal"}</span>
                     </span>
                   )}
                 </Button>
@@ -285,9 +311,9 @@ export default function DocumentosPage() {
               <Card className="bg-slate-900 border-slate-800 rounded-2xl min-h-[600px] flex flex-col">
                 <CardHeader className="p-5 border-b border-slate-800 flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle className="text-base text-white">Vista Previa del Borrador Legal</CardTitle>
+                    <CardTitle className="text-base text-white">{t.docPreviewTitle || "Vista Previa del Borrador Legal"}</CardTitle>
                     <CardDescription className="text-xs text-slate-400">
-                      Listo para firmar, personalizar o exportar directamente.
+                      {t.docPreviewSubtitle || "Listo para firmar, personalizar o exportar directamente."}
                     </CardDescription>
                   </div>
 
@@ -300,7 +326,7 @@ export default function DocumentosPage() {
                         className="text-xs border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 rounded-lg px-2.5 py-1"
                       >
                         {isCopied ? <Check className="w-3.5 h-3.5 mr-1 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
-                        {isCopied ? 'Copiado' : 'Copiar'}
+                        {isCopied ? (t.docCopied || 'Copiado') : (t.docCopy || 'Copiar')}
                       </Button>
                     </div>
                   )}
@@ -310,9 +336,9 @@ export default function DocumentosPage() {
                   {!generatedDoc ? (
                     <div className="py-24 text-center space-y-3 my-auto">
                       <FileText className="w-12 h-12 text-slate-700 mx-auto" />
-                      <p className="text-sm font-medium text-slate-300">Ningún documento generado aún</p>
+                      <p className="text-sm font-medium text-slate-300">{t.noDocGenerated || "Ningún documento generado aún"}</p>
                       <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                        Completa el formulario y haz clic en "Generar Borrador Formal" para ver la redacción jurídica aquí.
+                        {t.noDocGeneratedDesc || "Completa el formulario y haz clic en 'Generar Borrador Formal' para ver la redacción jurídica aquí."}
                       </p>
                     </div>
                   ) : (
@@ -323,7 +349,7 @@ export default function DocumentosPage() {
 
                       {/* Export Hub Buttons */}
                       <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-xs text-slate-400">Exportar documento:</span>
+                        <span className="text-xs text-slate-400">{t.exportDocument || "Exportar documento:"}</span>
                         <div className="flex items-center space-x-2">
                           <Button
                             size="sm"
@@ -332,7 +358,7 @@ export default function DocumentosPage() {
                             className="bg-red-600 hover:bg-red-500 text-white text-xs rounded-lg flex items-center space-x-1.5"
                           >
                             <Download className="w-3.5 h-3.5" />
-                            <span>{isExportingPdf ? 'Exportando...' : 'Descargar PDF'}</span>
+                            <span>{isExportingPdf ? (t.exportingPdf || 'Exportando...') : (t.downloadPdf || 'Descargar PDF')}</span>
                           </Button>
 
                           <Button
@@ -341,7 +367,7 @@ export default function DocumentosPage() {
                             className="bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg flex items-center space-x-1.5"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
-                            <span>Abrir en Google Docs</span>
+                            <span>{t.openGoogleDocs || "Abrir en Google Docs"}</span>
                           </Button>
                         </div>
                       </div>

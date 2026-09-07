@@ -283,16 +283,19 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
                 <span>🎙️</span>
                 <span>Dictar hechos por notas de voz (MediaSuite API):</span>
               </div>
-              <VoiceRecorder onRecordingComplete={(blob) => {
-                const formData = new FormData();
-                formData.append('file', blob, 'intake_voice.webm');
-                fetch('/api/citizen/transcribe', { method: 'POST', body: formData })
-                  .then(r => r.json())
-                  .then(data => {
-                    if (data.text) handleVoiceTranscription(data.text);
-                  })
-                  .catch(err => console.error('Transcription error:', err));
-              }} />
+              <VoiceRecorder 
+                compact={true}
+                onRecordingComplete={(blob) => {
+                  const formData = new FormData();
+                  formData.append('file', blob, 'intake_voice.webm');
+                  fetch('/api/citizen/transcribe', { method: 'POST', body: formData })
+                    .then(r => r.json())
+                    .then(data => {
+                      if (data.text) handleVoiceTranscription(data.text);
+                    })
+                    .catch(err => console.error('Transcription error:', err));
+                }} 
+              />
             </div>
           </div>
         )}

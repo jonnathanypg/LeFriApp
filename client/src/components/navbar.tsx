@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useAuth } from '@/hooks/use-auth';
 import { useTheme } from '@/components/theme-provider';
 import { Scale, ChevronDown, User, Settings, LogOut, Moon, Sun, Globe, BookOpen, MessageSquare, AlertTriangle, FileText } from 'lucide-react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
 
@@ -18,6 +18,18 @@ export function Navbar() {
   const { language, setLanguage } = useLanguage();
   const t = useTranslations(language);
   const queryClient = useQueryClient();
+
+  const { data: systemSettings } = useQuery<{ internationalizationEnabled: boolean }>({
+    queryKey: ['/api/citizen/system/settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/citizen/system/settings');
+      if (!res.ok) return { internationalizationEnabled: false };
+      return await res.json();
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const isI18nActive = systemSettings?.internationalizationEnabled ?? false;
 
   const handleLanguageChange = async (newLanguage: string) => {
     try {
@@ -154,19 +166,21 @@ export function Navbar() {
 
           {/* Right section */}
           <div className="flex items-center space-x-4">
-            {/* Language Selector */}
-            <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="w-[140px] bg-slate-900 border-slate-700 text-slate-200">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
-                {languageOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {/* Language Selector - only visible when internationalization is active */}
+            {isI18nActive && (
+              <Select value={language} onValueChange={handleLanguageChange}>
+                <SelectTrigger className="w-[140px] bg-slate-900 border-slate-700 text-slate-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
+                  {languageOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
 
             {/* User Menu */}
             <DropdownMenu>

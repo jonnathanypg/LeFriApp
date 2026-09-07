@@ -8,8 +8,9 @@ import { Navbar } from '@/components/navbar';
 import { 
   Users, Briefcase, Phone, MessageSquare, 
   Send, Bot, CheckCircle, Clock, ShieldAlert,
-  Settings, BarChart3, RefreshCw, Key
+  Settings, BarChart3, RefreshCw, Key, Globe
 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -138,6 +139,32 @@ export default function AdminDashboard() {
     }
   });
 
+  // Mutación para activar/desactivar internacionalización
+  const updateI18nMutation = useMutation({
+    mutationFn: async (enabled: boolean) => {
+      const response = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ internationalizationEnabled: enabled })
+      });
+      if (!response.ok) throw new Error("Error al actualizar configuración");
+      return await response.json();
+    },
+    onSuccess: (_, enabled) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/config'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/citizen/system/settings'] });
+      toast({
+        title: enabled ? "Modo Internacionalización Activado" : "Modo Internacionalización Desactivado",
+        description: enabled 
+          ? "Se han habilitado todos los idiomas (ES, EN, PT) y constituciones internacionales (incluyendo Brasil)." 
+          : "La plataforma ahora está limitada exclusivamente a Ecuador (EC) y Español (ES)."
+      });
+    },
+    onError: (err: any) => {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  });
+
   // Mutación para desconectar WhatsApp
   const disconnectMutation = useMutation({
     mutationFn: async () => {
@@ -244,10 +271,11 @@ export default function AdminDashboard() {
 
             {/* Tabs Interface */}
             <Tabs defaultValue="channels" className="w-full">
-              <TabsList className="bg-neutral-200/60 p-1 rounded-xl w-full md:w-auto grid grid-cols-3 gap-2 mb-6">
+              <TabsList className="bg-neutral-200/60 p-1 rounded-xl w-full md:w-auto grid grid-cols-2 md:grid-cols-4 gap-2 mb-6">
                 <TabsTrigger value="channels" className="rounded-lg py-2">Canales B2C</TabsTrigger>
                 <TabsTrigger value="users" className="rounded-lg py-2">Usuarios y Abogados</TabsTrigger>
                 <TabsTrigger value="firms" className="rounded-lg py-2">Bufetes (SaaS)</TabsTrigger>
+                <TabsTrigger value="settings" className="rounded-lg py-2">Configuración & Expansión</TabsTrigger>
               </TabsList>
 
               {/* Channels B2C */}
@@ -589,6 +617,79 @@ export default function AdminDashboard() {
                     ) : (
                       <div className="p-12 text-center text-neutral-500">No hay bufetes registrados.</div>
                     )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* System Settings & Global Expansion */}
+              <TabsContent value="settings" className="space-y-6">
+                <Card className="shadow border-slate-800 bg-slate-900 text-slate-100">
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <Globe className="w-5 h-5 text-indigo-400" />
+                      <CardTitle className="text-white">Internacionalización y Expansión Global</CardTitle>
+                    </div>
+                    <CardDescription className="text-slate-400">
+                      Controla el alcance geográfico e idiomático de la plataforma LeFriApp.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-5 rounded-xl border border-slate-800 bg-slate-950/60">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-sm text-slate-100">Modo Internacionalización (Multilenguaje y Multipaís)</span>
+                          {configData.internationalizationEnabled ? (
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px]">
+                              Activo: Global (ES / EN / PT)
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-amber-500/20 text-amber-400 border border-amber-500/30 text-[10px]">
+                              Inactivo: Exclusivo Ecuador (EC / ES)
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                          {configData.internationalizationEnabled
+                            ? "La plataforma está operando a nivel internacional. Se habilitan los selectores de idioma (Español, Inglés, Portugués) y la consulta de constituciones de América Latina y del mundo (Ecuador, Brasil, Colombia, Perú, México, Chile, Argentina, Estados Unidos y España)."
+                            : "La plataforma está bloqueada en su primera fase operativa: limitada exclusivamente a Ecuador (EC) y en idioma Español (ES). El selector de idiomas del menú permanece oculto para los usuarios."}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center space-x-3 flex-shrink-0">
+                        <span className="text-xs text-slate-400 font-medium">
+                          {configData.internationalizationEnabled ? "Habilitado" : "Deshabilitado"}
+                        </span>
+                        <Switch
+                          checked={Boolean(configData.internationalizationEnabled)}
+                          disabled={updateI18nMutation.isPending}
+                          onCheckedChange={(checked) => updateI18nMutation.mutate(checked)}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                      <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/40 text-xs space-y-2">
+                        <div className="font-semibold text-indigo-300 flex items-center gap-1.5">
+                          <span>🇪🇨</span> Estado Actual del Ecosistema
+                        </div>
+                        <ul className="space-y-1 text-slate-400 list-disc pl-4">
+                          <li>Jurisdicción Base: <strong>Ecuador (EC)</strong></li>
+                          <li>Idioma Predeterminado: <strong>Español (es)</strong></li>
+                          <li>Acceso a Brasil (BR): <strong>{configData.internationalizationEnabled ? "Habilitado (Constituição Brasileira)" : "Restringido"}</strong></li>
+                        </ul>
+                      </div>
+
+                      <div className="p-4 rounded-xl border border-slate-800 bg-slate-950/40 text-xs space-y-2">
+                        <div className="font-semibold text-emerald-300 flex items-center gap-1.5">
+                          <span>🌐</span> Capacidades Habilitadas con Expansión
+                        </div>
+                        <ul className="space-y-1 text-slate-400 list-disc pl-4">
+                          <li>Selector de Idiomas en Barra de Navegación: <strong>🇪🇸 ES | 🇺🇸 EN | 🇧🇷 PT</strong></li>
+                          <li>Acceso a ConstituteProject de 9+ países (incluyendo Brasil)</li>
+                          <li>Generación y redacción de documentos en múltiples idiomas</li>
+                        </ul>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Navbar } from '@/components/navbar';
 import { useAuth } from '@/hooks/use-auth';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useTranslations } from '@/lib/i18n';
 import { 
   BookOpen, Search, Sparkles, Scale, ShieldCheck, HelpCircle, 
   ArrowRight, CheckCircle2, Globe, HeartHandshake, Volume2, Mic
@@ -262,22 +264,40 @@ function MarkdownRenderer({ content }: { content: string }) {
 
 export default function ConstitucionPage() {
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   const [selectedCountry, setSelectedCountry] = useState(user?.country || 'EC');
-  const [searchQuery, setSearchQuery] = useState('debido proceso');
+  const [searchQuery, setSearchQuery] = useState('');
   const [activeSearch, setActiveSearch] = useState('debido proceso');
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
 
-  const countries = [
-    { value: 'EC', label: '🇪🇨 Ecuador' },
-    { value: 'CO', label: '🇨🇴 Colombia' },
-    { value: 'PE', label: '🇵🇪 Perú' },
-    { value: 'MX', label: '🇲🇽 México' },
-    { value: 'CL', label: '🇨🇱 Chile' },
-    { value: 'AR', label: '🇦🇷 Argentina' },
-    { value: 'US', label: '🇺🇸 Estados Unidos' },
-    { value: 'ES', label: '🇪🇸 España' },
+  const { data: systemSettings } = useQuery<{ internationalizationEnabled: boolean }>({
+    queryKey: ['/api/citizen/system/settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/citizen/system/settings');
+      if (!res.ok) return { internationalizationEnabled: false };
+      return await res.json();
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const isI18nActive = systemSettings?.internationalizationEnabled ?? false;
+
+  const allCountries = [
+    { value: 'EC', label: `🇪🇨 ${t.countries?.EC || 'Ecuador'}` },
+    { value: 'BR', label: `🇧🇷 ${t.countries?.BR || 'Brasil'}` },
+    { value: 'CO', label: `🇨🇴 ${t.countries?.CO || 'Colombia'}` },
+    { value: 'PE', label: `🇵🇪 ${t.countries?.PE || 'Perú'}` },
+    { value: 'MX', label: `🇲🇽 ${t.countries?.MX || 'México'}` },
+    { value: 'CL', label: `🇨🇱 ${t.countries?.CL || 'Chile'}` },
+    { value: 'AR', label: `🇦🇷 ${t.countries?.AR || 'Argentina'}` },
+    { value: 'US', label: `🇺🇸 ${t.countries?.US || 'Estados Unidos'}` },
+    { value: 'ES', label: `🇪🇸 ${t.countries?.ES || 'España'}` },
   ];
+
+  // If internationalization is disabled, limit exclusively to Ecuador
+  const countries = isI18nActive ? allCountries : allCountries.filter(c => c.value === 'EC');
 
   const { data: exploreData, isLoading } = useQuery({
     queryKey: ['/api/citizen/constitution/explore', selectedCountry, activeSearch],
@@ -296,7 +316,7 @@ export default function ConstitucionPage() {
         body: JSON.stringify({
           articleText,
           country: selectedCountry,
-          language: user?.language || 'es'
+          language: language || user?.language || 'es'
         })
       });
       if (!res.ok) throw new Error('Error al explicar artículo');
@@ -307,7 +327,7 @@ export default function ConstitucionPage() {
     },
     onError: () => {
       toast({
-        title: "Error",
+        title: t.error || "Error",
         description: "No se pudo generar la explicación ciudadana.",
         variant: "destructive"
       });
@@ -328,6 +348,15 @@ export default function ConstitucionPage() {
     setExplanation(null);
   };
 
+  const topicSuggestions = [
+    { label: t.topicDueProcess || '⚖️ Debido proceso', query: 'debido proceso' },
+    { label: t.topicLabor || '💼 Derecho al trabajo', query: 'trabajo' },
+    { label: t.topicHealth || '🏥 Salud y seguridad', query: 'salud' },
+    { label: t.topicEquality || '🤝 Igualdad y no discriminación', query: 'igualdad' },
+    { label: t.topicFreedom || '🕊️ Libertad y garantías', query: 'libertad' },
+    { label: t.topicHousing || '🏠 Vivienda y hábitat', query: 'vivienda' }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
@@ -341,11 +370,11 @@ export default function ConstitucionPage() {
                 <BookOpen className="w-5 h-5" />
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">
-                Ruta de la Constitución & Derechos
+                {t.constitutionTitle || "Ruta de la Constitución & Derechos"}
               </h1>
             </div>
             <p className="text-xs sm:text-sm text-slate-400">
-              Explorador pedagógico de normas constitucionales y garantías ciudadanas conectado a ConstituteProject API.
+              {t.constitutionSubtitle || "Explorador pedagógico de normas constitucionales y garantías ciudadanas conectado a ConstituteProject API."}
             </p>
           </div>
 
@@ -355,7 +384,7 @@ export default function ConstitucionPage() {
               setSelectedArticle(null);
               setExplanation(null);
             }}>
-              <SelectTrigger className="w-[160px] bg-slate-900 border-slate-800 text-slate-200 text-xs">
+              <SelectTrigger className="w-[170px] bg-slate-900 border-slate-800 text-slate-200 text-xs">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="bg-slate-900 border-slate-800 text-slate-200">
@@ -377,25 +406,18 @@ export default function ConstitucionPage() {
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Busca por tema (ej: debido proceso, libertad de expresión, derecho al trabajo, salud)..."
+                placeholder={t.constitutionSearchPlaceholder || "Busca por tema (ej: debido proceso, libertad de expresión, derecho al trabajo, salud)..."}
                 className="pl-10 bg-slate-900 border-slate-800 text-slate-100 rounded-xl placeholder:text-slate-500"
               />
             </div>
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl px-5">
-              Buscar
+              {t.constitutionSearchButton || t.search || "Buscar"}
             </Button>
           </form>
 
           <div className="flex flex-wrap gap-2 text-xs">
-            <span className="text-slate-500 py-1 font-medium">Temas frecuentes:</span>
-            {[
-              { label: '⚖️ Debido proceso', query: 'debido proceso' },
-              { label: '💼 Derecho al trabajo', query: 'trabajo' },
-              { label: '🏥 Salud y seguridad', query: 'salud' },
-              { label: '🤝 Igualdad y no discriminación', query: 'igualdad' },
-              { label: '🕊️ Libertad y garantías', query: 'libertad' },
-              { label: '🏠 Vivienda y hábitat', query: 'vivienda' }
-            ].map((topic) => (
+            <span className="text-slate-500 py-1 font-medium">{t.frequentTopics || "Temas frecuentes:"}</span>
+            {topicSuggestions.map((topic) => (
               <button
                 key={topic.query}
                 type="button"
@@ -418,13 +440,13 @@ export default function ConstitucionPage() {
           {/* Left Column: Articles List */}
           <div className="lg:col-span-6 space-y-4">
             <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-              Artículos & Disposiciones Halladas ({exploreData?.articles?.length || 0})
+              {t.articlesFound || "Artículos & Disposiciones Halladas"} ({exploreData?.articles?.length || 0})
             </h2>
 
             {isLoading ? (
               <div className="p-8 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
                 <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                <p className="text-xs text-slate-400">Consultando ConstituteProject API...</p>
+                <p className="text-xs text-slate-400">{t.loadingConstitute || "Consultando ConstituteProject API..."}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -447,7 +469,7 @@ export default function ConstitucionPage() {
                           </Badge>
                           <span className="text-[10px] text-slate-500 flex items-center">
                             <Sparkles className="w-3 h-3 mr-1 text-indigo-400" />
-                            Clic para Explicar
+                            {t.clickToExplain || "Clic para Explicar"}
                           </span>
                         </div>
                       </CardHeader>
@@ -471,16 +493,16 @@ export default function ConstitucionPage() {
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base font-semibold text-white flex items-center space-x-2">
                       <ShieldCheck className="w-5 h-5 text-emerald-400" />
-                      <span>Explicación Ciudadana Inteligente</span>
+                      <span>{t.citizenExplanationStudio || "Explicación Ciudadana Inteligente"}</span>
                     </CardTitle>
                     {selectedArticle && (
                       <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                        En Lenguaje Claro
+                        {t.inPlainLanguage || "En Lenguaje Claro"}
                       </Badge>
                     )}
                   </div>
                   <CardDescription className="text-xs text-slate-400">
-                    Traducción directa de normas técnicas a derechos prácticos y cotidianos.
+                    {t.explanationSubtitle || "Traducción directa de normas técnicas a derechos prácticos y cotidianos."}
                   </CardDescription>
                 </CardHeader>
 
@@ -488,38 +510,40 @@ export default function ConstitucionPage() {
                   {!selectedArticle ? (
                     <div className="py-16 text-center space-y-3">
                       <HelpCircle className="w-10 h-10 text-slate-600 mx-auto" />
-                      <p className="text-sm font-medium text-slate-300">Selecciona un artículo constitucional</p>
+                      <p className="text-sm font-medium text-slate-300">{t.selectAnArticle || "Selecciona un artículo constitucional"}</p>
                       <p className="text-xs text-slate-500 max-w-xs mx-auto">
-                        Haz clic en cualquiera de las disposiciones a la izquierda para traducirla a un formato pedagógico y saber cómo te protege.
+                        {t.selectAnArticleDesc || "Haz clic en cualquiera de las disposiciones a la izquierda para traducirla a un formato pedagógico y saber cómo te protege."}
                       </p>
                     </div>
                   ) : explainMutation.isPending ? (
                     <div className="py-16 text-center space-y-3">
                       <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                      <p className="text-sm font-medium text-slate-200">Generando explicación ciudadana...</p>
-                      <p className="text-xs text-slate-500">Desglosando principios y aplicaciones prácticas sin tecnicismos.</p>
+                      <p className="text-sm font-medium text-slate-200">{t.generatingExplanation || "Generando explicación ciudadana..."}</p>
+                      <p className="text-xs text-slate-500">{t.generatingExplanationDesc || "Desglosando principios y aplicaciones prácticas sin tecnicismos."}</p>
                     </div>
                   ) : explanation ? (
                     <div className="space-y-4">
                       <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-400">
-                        <strong className="text-slate-300 block mb-1">Texto original consultado:</strong>
+                        <strong className="text-slate-300 block mb-1">{t.originalTextConsulted || "Texto original consultado:"}</strong>
                         <p className="italic">"{selectedArticle.content}"</p>
                       </div>
 
                       <MarkdownRenderer content={explanation} />
 
                       <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
-                        <span className="text-[11px] text-slate-500">Fundamento: Constitución Política ({selectedCountry})</span>
+                        <span className="text-[11px] text-slate-500">
+                          {t.legalBasisConstitution || "Fundamento: Constitución Política"} ({t.countries?.[selectedCountry] || selectedCountry})
+                        </span>
                         <Button 
                           size="sm" 
                           variant="outline" 
                           onClick={() => {
                             navigator.clipboard.writeText(explanation);
-                            toast({ title: "Copiado", description: "Explicación copiada al portapapeles" });
+                            toast({ title: t.docCopied || "Copiado", description: t.explanationCopied || "Explicación copiada al portapapeles" });
                           }}
                           className="text-xs border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200"
                         >
-                          Copiar Explicación
+                          {t.copyExplanation || "Copiar Explicación"}
                         </Button>
                       </div>
                     </div>

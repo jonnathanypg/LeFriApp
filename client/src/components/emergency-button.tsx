@@ -94,28 +94,39 @@ export function EmergencyButton() {
           <Button
             onClick={handleActivateEmergency}
             disabled={isActivating || isSendingWithVoice}
-            className={`w-full py-6 px-8 text-lg font-bold rounded-xl transition-all duration-300 shadow-xl ${
+            className={`w-full py-5 px-6 text-base font-semibold rounded-xl transition-all duration-300 shadow-lg ${
               isActivating || isSendingWithVoice
-                ? 'bg-slate-700 text-slate-400 cursor-not-allowed' 
-                : 'bg-gradient-to-r from-red-600 via-red-500 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white shadow-red-500/30 border border-red-400/40 ring-4 ring-red-500/20 animate-pulse'
+                ? 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700' 
+                : 'bg-gradient-to-r from-red-600 via-rose-600 to-red-600 hover:from-red-500 hover:to-rose-500 text-white shadow-rose-950/50 border border-red-500/40 hover:shadow-red-500/20 hover:scale-[1.01] active:scale-[0.99]'
             }`}
           >
-            <AlertTriangle className="w-6 h-6 mr-3 text-white" />
-            {isActivating ? (t.sendingAlerts || "Transmitiendo Alerta SOS...") : (t.emergencyActivate || "ACTIVAR ALERTA SOS INMEDIATA")}
+            <div className="flex items-center justify-center gap-2.5">
+              <span className="relative flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+              </span>
+              <span>
+                {isActivating ? (t.sendingAlerts || "Transmitiendo Alerta SOS...") : (t.emergencyActivate || "Activar Alerta SOS Inmediata")}
+              </span>
+            </div>
           </Button>
 
           <Button
             onClick={handleVoiceEmergency}
             disabled={isActivating || isSendingWithVoice}
             variant="outline"
-            className={`w-full py-4 px-6 text-sm font-semibold rounded-xl transition-all duration-200 border border-red-500/40 bg-red-500/10 text-red-300 hover:bg-red-500/20 ${
+            className={`w-full py-4 px-5 text-xs sm:text-sm font-medium rounded-xl transition-all duration-200 border border-slate-700/80 bg-slate-900/60 hover:bg-slate-800/80 text-slate-200 hover:text-white hover:border-slate-600 ${
               isActivating || isSendingWithVoice
                 ? 'border-slate-800 text-slate-500 cursor-not-allowed'
                 : ''
             }`}
           >
-            <Mic className="w-4 h-4 mr-2 text-red-400" />
-            {t.emergencyActivateWithVoice || "Dictar Audio de Emergencia (MediaSuite)"}
+            <div className="flex items-center justify-center gap-2">
+              <div className="p-1 rounded-md bg-rose-500/10 text-rose-400">
+                <Mic className="w-3.5 h-3.5" />
+              </div>
+              <span>{t.emergencyActivateWithVoice || "Grabar Nota de Voz de Emergencia"}</span>
+            </div>
           </Button>
         </div>
 

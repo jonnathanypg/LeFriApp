@@ -438,7 +438,7 @@ citizenRouter.get("/constitution/explore", async (req: any, res) => {
 
     const structuredArticles = articles.map((content, idx) => {
       let title = `Disposición Constitucional ${idx + 1}`;
-      const match = content.match(/(Art[ií]culo\s*\d+[^\.\:\n]*)/i);
+      const match = content.match(/(Art(?:[ií]culo)?\.?\s*\d+[^\.\:\n]*)/i);
       if (match) {
         title = match[1].trim();
       }
@@ -594,4 +594,19 @@ citizenRouter.post("/documents/export-pdf", async (req: any, res) => {
     res.status(500).json({ error: "Failed to export PDF" });
   }
 });
+
+/**
+ * Public system settings endpoint for frontend feature discovery
+ */
+citizenRouter.get("/system/settings", async (_req, res) => {
+  try {
+    const i18nConfig = await storage.getSystemConfig('internationalization_enabled');
+    res.json({
+      internationalizationEnabled: i18nConfig ? Boolean(i18nConfig.value) : false
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 

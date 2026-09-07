@@ -12,14 +12,16 @@ interface VoiceRecorderProps {
   title?: string;
   maxDuration?: number; // in seconds
   autoUpload?: boolean;
+  compact?: boolean;
 }
 
 export function VoiceRecorder({ 
   onRecordingComplete, 
   onUploadSuccess,
-  title = "Grabador de Voz",
+  title,
   maxDuration = 60,
-  autoUpload = false
+  autoUpload = false,
+  compact = false
 }: VoiceRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
@@ -207,89 +209,201 @@ export function VoiceRecorder({
 
   const progressPercentage = (duration / maxDuration) * 100;
 
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center space-x-2">
-          <Mic className="w-5 h-5" />
-          <span>{title}</span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+  // Compact / Inline Minimalist Pill Mode
+  if (compact) {
+    return (
+      <div className="flex items-center gap-2">
         {error && (
-          <Alert className="border-red-200 bg-red-50">
-            <AlertDescription className="text-red-700">
-              {error}
-            </AlertDescription>
-          </Alert>
+          <span className="text-[11px] text-red-400 bg-red-950/40 px-2 py-0.5 rounded border border-red-500/20">
+            {error}
+          </span>
         )}
 
-        {/* Recording Controls */}
-        <div className="flex items-center justify-center space-x-3">
-          {!isRecording && !audioBlob && (
-            <Button
-              onClick={startRecording}
-              className="bg-red-500 hover:bg-red-600 text-white px-6 py-3"
-            >
-              <Mic className="w-5 h-5 mr-2" />
-              {t.startRecording}
-            </Button>
-          )}
+        {audioUrl && (
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onEnded={() => setIsPlaying(false)}
+            className="hidden"
+          />
+        )}
 
-          {isRecording && (
-            <>
-              <Button
-                onClick={pauseRecording}
-                variant="outline"
-                className="px-4 py-2"
-              >
-                {isPaused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
-                {isPaused ? vr.resume : vr.pause}
-              </Button>
-              
-              <Button
-                onClick={stopRecording}
-                className="bg-red-500 hover:bg-red-600 text-white px-4 py-2"
-              >
-                <Square className="w-4 h-4 mr-2" />
-                {vr.stop}
-              </Button>
-            </>
-          )}
-        </div>
+        {!isRecording && !audioBlob && (
+          <Button
+            type="button"
+            size="sm"
+            onClick={startRecording}
+            className="h-8 px-3 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700/80 hover:border-slate-600 shadow-sm transition-all duration-200 text-xs font-medium flex items-center gap-1.5"
+          >
+            <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+            <Mic className="w-3.5 h-3.5 text-rose-400" />
+            <span>{t.startRecording || "Grabar"}</span>
+          </Button>
+        )}
 
-        {/* Duration and Progress */}
-        {(isRecording || audioBlob) && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm text-gray-600">
-              <span>{vr.duration}: {formatDuration(duration)}</span>
-              <span>{t.maxDuration}</span>
+        {isRecording && (
+          <div className="flex items-center gap-2 bg-rose-950/30 border border-rose-500/30 px-2.5 py-1 rounded-lg backdrop-blur-sm">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+              <span className="text-xs font-mono font-medium text-rose-300">
+                {formatDuration(duration)}
+              </span>
             </div>
-            
-            <div className="w-full bg-gray-200 rounded-full h-2">
+
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={pauseRecording}
+              className="h-6 w-6 p-0 text-slate-300 hover:text-white hover:bg-slate-800/60"
+            >
+              {isPaused ? <Play className="w-3 h-3 text-emerald-400" /> : <Pause className="w-3 h-3 text-amber-400" />}
+            </Button>
+
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={stopRecording}
+              className="h-6 w-6 p-0 text-rose-400 hover:text-rose-300 hover:bg-rose-900/40"
+            >
+              <Square className="w-3 h-3 fill-rose-500 text-rose-500" />
+            </Button>
+          </div>
+        )}
+
+        {audioBlob && (
+          <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2.5 py-1 rounded-lg">
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={playAudio}
+              className="h-6 w-6 p-0 text-slate-200 hover:text-white hover:bg-slate-800"
+            >
+              {isPlaying ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 text-indigo-400" />}
+            </Button>
+
+            <span className="text-[11px] font-mono text-slate-400">
+              {formatDuration(duration)}
+            </span>
+
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={deleteRecording}
+              className="h-6 w-6 p-0 text-slate-400 hover:text-rose-400 hover:bg-rose-950/40"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+
+            {!autoUpload && (
+              <Button
+                type="button"
+                size="sm"
+                onClick={() => uploadRecording()}
+                disabled={isUploading}
+                className="h-6 px-2 text-[11px] bg-indigo-600 hover:bg-indigo-500 text-white rounded font-medium ml-1"
+              >
+                {isUploading ? (
+                  <span className="animate-spin text-[10px]">⏳</span>
+                ) : (
+                  <Send className="w-2.5 h-2.5" />
+                )}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Modern Minimalist Card/Block Mode
+  return (
+    <div className="rounded-2xl border border-slate-800 bg-slate-900/90 backdrop-blur-xl p-4 shadow-lg text-slate-100 transition-all duration-200">
+      {title && (
+        <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-200">
+            <div className="p-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400">
+              <Mic className="w-4 h-4" />
+            </div>
+            <span>{title}</span>
+          </div>
+          <span className="text-[11px] text-slate-400 font-medium">
+            {t.maxDuration || "Máx 1:00"}
+          </span>
+        </div>
+      )}
+
+      {error && (
+        <Alert className="mb-3 border-red-500/30 bg-red-950/40 text-red-300 py-2 text-xs">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {/* Main Control Area */}
+      <div className="flex flex-col items-center justify-center py-2 space-y-3">
+        {!isRecording && !audioBlob && (
+          <Button
+            type="button"
+            onClick={startRecording}
+            className="group relative h-12 px-6 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white font-medium shadow-md shadow-rose-900/20 border border-rose-400/20 transition-all duration-300 hover:scale-[1.02] flex items-center gap-2.5"
+          >
+            <div className="w-2.5 h-2.5 rounded-full bg-white/90 animate-pulse" />
+            <Mic className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+            <span className="text-sm font-semibold">{t.startRecording || "Iniciar Grabación"}</span>
+          </Button>
+        )}
+
+        {isRecording && (
+          <div className="w-full space-y-3">
+            <div className="flex items-center justify-between px-3 py-2 bg-rose-950/20 border border-rose-500/25 rounded-xl">
+              <div className="flex items-center gap-2 text-rose-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
+                <span className="text-xs font-semibold uppercase tracking-wider">
+                  {isPaused ? (vr.recordingPaused || "Pausado") : (vr.recording || "Grabando...")}
+                </span>
+              </div>
+              <span className="font-mono text-sm font-bold text-slate-200">
+                {formatDuration(duration)}
+              </span>
+            </div>
+
+            {/* Progress line */}
+            <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
               <div
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  isRecording ? 'bg-red-500' : 'bg-blue-500'
-                }`}
+                className="h-full bg-gradient-to-r from-rose-500 to-red-500 rounded-full transition-all duration-300"
                 style={{ width: `${Math.min(progressPercentage, 100)}%` }}
               />
             </div>
+
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <Button
+                type="button"
+                onClick={pauseRecording}
+                variant="outline"
+                className="h-9 px-4 rounded-xl border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-700 text-xs font-medium flex items-center gap-2"
+              >
+                {isPaused ? <Play className="w-3.5 h-3.5 text-emerald-400" /> : <Pause className="w-3.5 h-3.5 text-amber-400" />}
+                <span>{isPaused ? (vr.resume || "Reanudar") : (vr.pause || "Pausar")}</span>
+              </Button>
+              
+              <Button
+                type="button"
+                onClick={stopRecording}
+                className="h-9 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-medium flex items-center gap-2 shadow-sm"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+                <span>{vr.stop || "Finalizar"}</span>
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Recording Status */}
-        {isRecording && (
-          <div className="flex items-center justify-center space-x-2 text-red-600">
-            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-            <span className="font-medium">
-              {isPaused ? vr.recordingPaused : vr.recording}
-            </span>
-          </div>
-        )}
-
-        {/* Audio Playback */}
+        {/* Playback Controls */}
         {audioBlob && audioUrl && (
-          <div className="space-y-3">
+          <div className="w-full space-y-3">
             <audio
               ref={audioRef}
               src={audioUrl}
@@ -297,53 +411,63 @@ export function VoiceRecorder({
               className="hidden"
             />
             
-            <div className="flex items-center justify-center space-x-3">
-              <Button
-                onClick={playAudio}
-                variant="outline"
-                className="px-4 py-2"
-              >
-                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                {isPlaying ? vr.pause : vr.play}
-              </Button>
-              
-              <Button
-                onClick={deleteRecording}
-                variant="outline"
-                className="px-4 py-2 text-red-600 hover:text-red-700"
-              >
-                <Trash2 className="w-4 h-4 mr-1" />
-                {t.delete}
-              </Button>
-              
-              {!autoUpload && (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/60 border border-slate-800">
+              <div className="flex items-center gap-2">
                 <Button
-                  onClick={() => uploadRecording()}
-                  disabled={isUploading}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2"
+                  type="button"
+                  onClick={playAudio}
+                  size="sm"
+                  variant="ghost"
+                  className="h-9 w-9 p-0 rounded-lg bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 hover:text-white border border-indigo-500/20"
                 >
-                  <Send className="w-4 h-4 mr-1" />
-                  {isUploading ? vr.uploading : vr.send}
+                  {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4 fill-indigo-400" />}
                 </Button>
-              )}
+                <div>
+                  <p className="text-xs font-medium text-slate-200">
+                    {isPlaying ? (vr.pause || "Reproduciendo") : (vr.play || "Reproducir")}
+                  </p>
+                  <p className="text-[11px] font-mono text-slate-400">
+                    {formatDuration(duration)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  onClick={deleteRecording}
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 px-2.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/30 text-xs flex items-center gap-1"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{t.delete || "Eliminar"}</span>
+                </Button>
+                
+                {!autoUpload && (
+                  <Button
+                    type="button"
+                    onClick={() => uploadRecording()}
+                    disabled={isUploading}
+                    size="sm"
+                    className="h-8 px-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>{isUploading ? (vr.uploading || "Subiendo...") : (vr.send || "Usar")}</span>
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
         )}
+      </div>
 
-        {/* Upload Status */}
-        {isUploading && (
-          <div className="flex items-center justify-center space-x-2 text-blue-600">
-            <div className="loader"></div>
-            <span>{vr.uploading}</span>
-          </div>
-        )}
-
-        {/* Instructions */}
-        <div className="text-center text-xs text-gray-500 mt-4">
-          <p>{t.pressMicrophoneToRecord}</p>
-          <p>{t.maxDuration}</p>
-        </div>
-      </CardContent>
-    </Card>
+      {/* Helper text */}
+      {!isRecording && !audioBlob && (
+        <p className="text-center text-[11px] text-slate-400 mt-2">
+          {t.pressMicrophoneToRecord || "Presiona para grabar tu nota de voz"}
+        </p>
+      )}
+    </div>
   );
 }

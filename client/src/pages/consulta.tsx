@@ -8,22 +8,39 @@ import { LegalIntakeWizard } from '@/components/legal-intake-wizard';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
+import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 
 export default function Consulta() {
   const [, setLocation] = useLocation();
   const { user } = useAuth();
+  const { language } = useLanguage();
+  const t = useTranslations(language);
   const [selectedCountry, setSelectedCountry] = useState(user?.country || 'EC');
   const [mode, setMode] = useState<'wizard' | 'chat'>('wizard');
-  const t = useTranslations(user?.language || 'es');
 
-  const countries = [
-    { value: 'EC', label: '🇪🇨 Ecuador' },
-    { value: 'CO', label: '🇨🇴 Colombia' },
-    { value: 'PE', label: '🇵🇪 Perú' },
-    { value: 'US', label: '🇺🇸 Estados Unidos' },
-    { value: 'MX', label: '🇲🇽 México' },
+  const { data: systemSettings } = useQuery<{ internationalizationEnabled: boolean }>({
+    queryKey: ['/api/citizen/system/settings'],
+    queryFn: async () => {
+      const res = await fetch('/api/citizen/system/settings');
+      if (!res.ok) return { internationalizationEnabled: false };
+      return await res.json();
+    },
+    staleTime: 60 * 1000,
+  });
+
+  const isI18nActive = systemSettings?.internationalizationEnabled ?? false;
+
+  const allCountries = [
+    { value: 'EC', label: `🇪🇨 ${t.countries?.EC || 'Ecuador'}` },
+    { value: 'BR', label: `🇧🇷 ${t.countries?.BR || 'Brasil'}` },
+    { value: 'CO', label: `🇨🇴 ${t.countries?.CO || 'Colombia'}` },
+    { value: 'PE', label: `🇵🇪 ${t.countries?.PE || 'Perú'}` },
+    { value: 'US', label: `🇺🇸 ${t.countries?.US || 'Estados Unidos'}` },
+    { value: 'MX', label: `🇲🇽 ${t.countries?.MX || 'México'}` },
   ];
+
+  const countries = isI18nActive ? allCountries : allCountries.filter(c => c.value === 'EC');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
