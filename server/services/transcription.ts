@@ -83,13 +83,15 @@ export class TranscriptionService {
       console.warn('[TranscriptionService] MediaSuite External STT API failed:', error?.message || error);
     }
 
-    // 2. Fallback to Groq Whisper if available
-    const groqKey = process.env.GROQ_API_KEY;
-    if (groqKey) {
+    // 2. Fallback to Groq Whisper if available (ultra-fast transcription)
+    const rawGroqKey = process.env.GROQ_API_KEY;
+    if (rawGroqKey) {
+      const groqKey = rawGroqKey.trim().replace(/^['"]|['"]$/g, '');
       try {
         console.log('[TranscriptionService] Attempting fallback via Groq Whisper API...');
         const form = new FormData();
-        form.append('file', audioBuffer, filename);
+        const safeFilename = filename.includes('.') ? filename : `${filename}.webm`;
+        form.append('file', audioBuffer, { filename: safeFilename, contentType });
         form.append('model', 'whisper-large-v3');
 
         const headers = {
@@ -97,7 +99,10 @@ export class TranscriptionService {
           'Authorization': `Bearer ${groqKey}`
         };
 
-        const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', form, { headers });
+        const response = await axios.post('https://api.groq.com/openai/v1/audio/transcriptions', form, { 
+          headers,
+          timeout: 25000 
+        });
         if (response.data?.text) {
           console.log(`[TranscriptionService] Groq STT fallback successful. Length: ${response.data.text.length}`);
           return response.data.text.trim();
@@ -108,12 +113,14 @@ export class TranscriptionService {
     }
 
     // 3. Fallback to OpenAI Whisper if available
-    const openAiKey = process.env.OPENAI_API_KEY;
-    if (openAiKey) {
+    const rawOpenAiKey = process.env.OPENAI_API_KEY;
+    if (rawOpenAiKey) {
+      const openAiKey = rawOpenAiKey.trim().replace(/^['"]|['"]$/g, '');
       try {
         console.log('[TranscriptionService] Attempting fallback via OpenAI Whisper API...');
         const form = new FormData();
-        form.append('file', audioBuffer, filename);
+        const safeFilename = filename.includes('.') ? filename : `${filename}.webm`;
+        form.append('file', audioBuffer, { filename: safeFilename, contentType });
         form.append('model', 'whisper-1');
 
         const headers = {
@@ -121,7 +128,10 @@ export class TranscriptionService {
           'Authorization': `Bearer ${openAiKey}`
         };
 
-        const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', form, { headers });
+        const response = await axios.post('https://api.openai.com/v1/audio/transcriptions', form, { 
+          headers,
+          timeout: 30000 
+        });
         if (response.data?.text) {
           console.log(`[TranscriptionService] OpenAI Whisper fallback successful. Length: ${response.data.text.length}`);
           return response.data.text.trim();
