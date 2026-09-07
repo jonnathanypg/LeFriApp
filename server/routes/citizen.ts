@@ -697,9 +697,9 @@ citizenRouter.patch("/processes/:id", requireAuth, async (req: any, res) => {
  * Speech-To-Text Audio Transcription via MediaSuite Central API (media.weblifetech.com)
  * Handles audio uploads from legal intake wizard, dynamic chat, and legal document generator.
  */
-citizenRouter.post("/transcribe", upload.single("file"), async (req: any, res) => {
+citizenRouter.post("/transcribe", upload.any(), async (req: any, res) => {
   try {
-    const file = req.file || (req.files && req.files[0]);
+    const file = req.file || (req.files && req.files.find((f: any) => f.fieldname === 'file' || f.fieldname === 'audio')) || (req.files && req.files[0]);
     if (!file) {
       return res.status(400).json({ error: "No audio file provided" });
     }
@@ -721,9 +721,9 @@ citizenRouter.post("/transcribe", upload.single("file"), async (req: any, res) =
  * Voice Recording Upload & Storage endpoint (/api/voice/upload or /api/citizen/voice/upload)
  * Saves recording metadata and performs MediaSuite STT transcription.
  */
-citizenRouter.post("/voice/upload", upload.single("audio"), async (req: any, res) => {
+citizenRouter.post("/voice/upload", upload.any(), async (req: any, res) => {
   try {
-    const file = req.file || (req.files && req.files[0]);
+    const file = req.file || (req.files && req.files.find((f: any) => f.fieldname === 'audio' || f.fieldname === 'file')) || (req.files && req.files[0]);
     if (!file) {
       return res.status(400).json({ error: "No audio file provided" });
     }
@@ -767,10 +767,10 @@ citizenRouter.post("/voice/upload", upload.single("audio"), async (req: any, res
 /**
  * Emergency SOS Alert with Voice Recording
  */
-citizenRouter.post("/emergency/with-voice", upload.single("voiceNote"), async (req: any, res) => {
+citizenRouter.post("/emergency/with-voice", upload.any(), async (req: any, res) => {
   try {
     const { latitude, longitude, address } = req.body;
-    const file = req.file;
+    const file = req.file || (req.files && req.files.find((f: any) => f.fieldname === 'voiceNote' || f.fieldname === 'audio' || f.fieldname === 'file')) || (req.files && req.files[0]);
 
     const userId = req.userId || req.session?.userId || (req.headers['x-user-id'] ? parseInt(req.headers['x-user-id']) : 1);
     const user = (await storage.getUser(userId)) || { name: 'Ciudadano LeFriApp', language: 'es' };
@@ -779,7 +779,7 @@ citizenRouter.post("/emergency/with-voice", upload.single("voiceNote"), async (r
     let voiceTranscription = "";
     if (file) {
       try {
-        voiceTranscription = await transcriptionService.transcribeAudioBuffer(file.buffer, 'emergency_voice.webm');
+        voiceTranscription = await transcriptionService.transcribeAudioBuffer(file.buffer, file.originalname || 'emergency_voice.webm');
       } catch (sttErr: any) {
         console.warn("[CitizenRouter] STT error during emergency voice processing:", sttErr.message);
       }
