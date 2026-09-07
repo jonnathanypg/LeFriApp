@@ -77,22 +77,22 @@ export default function Proceso() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 border-b border-slate-800 pb-4">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => setLocation('/dashboard')}
-              className="p-2 hover:bg-neutral-100 rounded-lg"
+              className="p-2 hover:bg-slate-800 text-slate-300 rounded-lg"
             >
-              <ArrowLeft className="w-5 h-5 text-neutral-600" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-neutral-900">Procesos Legales</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">Procesos Legales</h1>
           </div>
 
           {/* Process Categories */}
@@ -100,24 +100,24 @@ export default function Proceso() {
             {processTypes.map((process) => (
               <Card 
                 key={process.id}
-                className="card-hover cursor-pointer border border-neutral-200"
+                className="card-hover cursor-pointer bg-slate-900 border-slate-800 text-slate-100 hover:border-slate-700 shadow-lg"
                 onClick={() => handleStartProcess(process.id)}
               >
                 <CardContent className="p-6">
                   <div className={`w-12 h-12 ${process.iconBg} rounded-xl flex items-center justify-center mb-4`}>
                     <process.icon className={`${process.iconColor} w-6 h-6`} />
                   </div>
-                  <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                  <h3 className="text-lg font-semibold text-white mb-2">
                     {process.title}
                   </h3>
-                  <p className="text-neutral-600 text-sm mb-4 leading-relaxed">
+                  <p className="text-slate-400 text-sm mb-4 leading-relaxed">
                     {process.description}
                   </p>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-slate-500">
                       {process.steps} pasos
                     </span>
-                    <ArrowRight className="w-4 h-4 text-blue-500" />
+                    <ArrowRight className="w-4 h-4 text-indigo-400" />
                   </div>
                 </CardContent>
               </Card>
@@ -125,9 +125,9 @@ export default function Proceso() {
           </div>
 
           {/* Active Processes */}
-          <Card>
+          <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
             <CardHeader>
-              <CardTitle className="text-xl">Procesos Activos</CardTitle>
+              <CardTitle className="text-xl text-white">Procesos Activos</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -137,24 +137,24 @@ export default function Proceso() {
                     const progress = ((process.currentStep + 1) / 8) * 100; // Assuming 8 steps max
                     
                     return (
-                      <div key={process.id} className="border border-neutral-200 rounded-xl p-4">
+                      <div key={process.id} className="border border-slate-800 bg-slate-950/80 rounded-xl p-4">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                              <ProcessIcon className="w-4 h-4 text-blue-500" />
+                            <div className="w-8 h-8 bg-indigo-900/40 rounded-lg flex items-center justify-center">
+                              <ProcessIcon className="w-4 h-4 text-indigo-400" />
                             </div>
                             <div>
-                              <h4 className="font-medium text-neutral-900">
+                              <h4 className="font-medium text-slate-200">
                                 {getProcessTitle(process.processType)}
                               </h4>
-                              <p className="text-xs text-neutral-500">
+                              <p className="text-xs text-slate-500">
                                 Iniciado el {new Date(process.startDate).toLocaleDateString('es-ES')}
                               </p>
                             </div>
                           </div>
                           <Button 
                             size="sm" 
-                            className="text-blue-500 hover:text-blue-600"
+                            className="text-indigo-400 hover:text-indigo-300"
                             variant="link"
                             onClick={() => handleStartProcess(process.processType)}
                           >

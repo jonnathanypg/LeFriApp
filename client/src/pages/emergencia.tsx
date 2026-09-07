@@ -115,22 +115,22 @@ export default function Emergencia() {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 border-b border-slate-800 pb-4">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => setLocation('/dashboard')}
-              className="p-2 hover:bg-neutral-100 rounded-lg"
+              className="p-2 hover:bg-slate-800 text-slate-300 rounded-lg"
             >
-              <ArrowLeft className="w-5 h-5 text-neutral-600" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-neutral-900">{t.emergencyTitle}</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-slate-200 to-red-300 bg-clip-text text-transparent">{t.emergencyTitle}</h1>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -138,7 +138,7 @@ export default function Emergencia() {
             <EmergencyButton />
 
             {/* Emergency Contacts */}
-            <Card>
+            <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-xl">{t.emergencyContacts}</CardTitle>
@@ -236,7 +236,7 @@ export default function Emergencia() {
                 <div className="space-y-3">
                   {emergencyContacts?.length > 0 ? (
                     emergencyContacts.map((contact: any, index: number) => (
-                      <div key={contact._id || contact.id || `contact-${index}`} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg">
+                      <div key={contact._id || contact.id || `contact-${index}`} className="flex items-center justify-between p-3 bg-slate-950/80 border border-slate-800 rounded-xl">
                         <div className="flex items-center space-x-3">
                           <Avatar className="w-8 h-8">
                             <AvatarFallback className={`${getAvatarColor(index)} text-white text-xs font-medium`}>
@@ -244,8 +244,8 @@ export default function Emergencia() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-neutral-900">{contact.name}</p>
-                            <p className="text-xs text-neutral-500">
+                            <p className="font-medium text-slate-100">{contact.name}</p>
+                            <p className="text-xs text-slate-400">
                               {relationships.find(r => r.value === contact.relationship)?.label || contact.relationship} • {contact.phone}
                             </p>
                           </div>

@@ -13,11 +13,113 @@ import {
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+function MarkdownRenderer({ content }: { content: string }) {
+  if (!content) return null;
+
+  // Split content by paragraphs or block lines
+  const sections = content.split(/\n\s*\n/);
+
+  const renderInline = (text: string) => {
+    // Parse bold **text**
+    const parts = text.split(/(\*\*.*?\*\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i} className="font-semibold text-slate-100">{part.slice(2, -2)}</strong>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      {sections.map((sec, secIdx) => {
+        const lines = sec.split('\n').map(l => l.trim()).filter(Boolean);
+        if (!lines.length) return null;
+
+        // Check if section starts with a section emoji header e.g. 🎯, 🛡️, ⚖️
+        const firstLine = lines[0];
+        const isHeader = /^(?:🎯|🛡️|⚖️|📌|💡|🏛️)\s*\*\*([^*]+)\*\*:?/i.test(firstLine) || /^#{1,4}\s+/.test(firstLine);
+
+        return (
+          <div 
+            key={secIdx} 
+            className={`p-4 rounded-xl ${
+              firstLine.includes('🎯') 
+                ? 'bg-indigo-950/30 border border-indigo-500/20' 
+                : firstLine.includes('🛡️') 
+                ? 'bg-emerald-950/30 border border-emerald-500/20' 
+                : firstLine.includes('⚖️') 
+                ? 'bg-amber-950/30 border border-amber-500/20' 
+                : 'bg-slate-950/50 border border-slate-800/80'
+            }`}
+          >
+            {lines.map((line, lineIdx) => {
+              // Header title match with emoji e.g. 🎯 **¿Qué significa este derecho...?**:
+              const headerMatch = line.match(/^((?:🎯|🛡️|⚖️|📌|💡|🏛️)?\s*)\*\*([^*]+)\*\*:?(.*)$/);
+              if (headerMatch && lineIdx === 0) {
+                const icon = headerMatch[1].trim();
+                const title = headerMatch[2].trim();
+                const rest = headerMatch[3]?.trim();
+                return (
+                  <div key={lineIdx} className="space-y-2">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      {icon && <span className="text-base">{icon}</span>}
+                      <span>{title}</span>
+                    </h3>
+                    {rest && (
+                      <p className="text-xs sm:text-sm text-slate-300 leading-relaxed pl-1">
+                        {renderInline(rest)}
+                      </p>
+                    )}
+                  </div>
+                );
+              }
+
+              // Markdown numbered item e.g. 1. **Maternidad gratuita**: ...
+              const numListMatch = line.match(/^(\d+)\.\s+(.*)$/);
+              if (numListMatch) {
+                const num = numListMatch[1];
+                const text = numListMatch[2];
+                return (
+                  <div key={lineIdx} className="flex items-start gap-2.5 my-2 text-xs sm:text-sm text-slate-300 leading-relaxed pl-1">
+                    <span className="w-5 h-5 rounded-full bg-slate-800 text-indigo-400 font-bold text-[11px] flex items-center justify-center flex-shrink-0 mt-0.5 border border-slate-700">
+                      {num}
+                    </span>
+                    <div className="flex-1">{renderInline(text)}</div>
+                  </div>
+                );
+              }
+
+              // Markdown bullet item e.g. - **Item**: ... or * ...
+              const bulletMatch = line.match(/^[\-\*]\s+(.*)$/);
+              if (bulletMatch) {
+                return (
+                  <div key={lineIdx} className="flex items-start gap-2 my-1.5 text-xs sm:text-sm text-slate-300 leading-relaxed pl-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 mt-2 flex-shrink-0" />
+                    <div className="flex-1">{renderInline(bulletMatch[1])}</div>
+                  </div>
+                );
+              }
+
+              // Standard paragraph
+              return (
+                <p key={lineIdx} className="text-xs sm:text-sm text-slate-300 leading-relaxed my-1">
+                  {renderInline(line)}
+                </p>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function ConstitucionPage() {
   const { user } = useAuth();
   const [selectedCountry, setSelectedCountry] = useState(user?.country || 'EC');
-  const [searchQuery, setSearchQuery] = useState('derechos fundamentales debido proceso');
-  const [activeSearch, setActiveSearch] = useState('derechos fundamentales debido proceso');
+  const [searchQuery, setSearchQuery] = useState('debido proceso');
+  const [activeSearch, setActiveSearch] = useState('debido proceso');
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
 
@@ -259,9 +361,7 @@ export default function ConstitucionPage() {
                         <p className="italic">"{selectedArticle.content}"</p>
                       </div>
 
-                      <div className="text-xs sm:text-sm text-slate-200 leading-relaxed space-y-3 whitespace-pre-wrap">
-                        {explanation}
-                      </div>
+                      <MarkdownRenderer content={explanation} />
 
                       <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
                         <span className="text-[11px] text-slate-500">Fundamento: Constitución Política ({selectedCountry})</span>

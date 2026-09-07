@@ -137,12 +137,9 @@ export default function LandingHome() {
               <BookOpen className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-bold text-lg tracking-tight text-white">LeFriApp</span>
-                <Badge variant="outline" className="text-[10px] uppercase font-mono tracking-wider border-teal-500/40 text-teal-300 bg-teal-500/10">
-                  Constitución y Derechos
-                </Badge>
-              </div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-lg tracking-tight text-white">LeFriApp</span>
+                </div>
               <p className="text-[11px] text-slate-400 font-sans hidden sm:block">
                 Educación cívica y comprensión de derechos fundamentales
               </p>

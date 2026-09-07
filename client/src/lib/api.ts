@@ -15,7 +15,12 @@ export const api = {
   
   logout: () => apiRequest('POST', '/api/auth/logout'),
   
-  getMe: () => apiRequest('GET', '/api/auth/me'),
+  getMe: async () => {
+    const res = await fetch('/api/auth/me', {
+      credentials: 'include',
+    });
+    return res;
+  },
 
   // Consultations
   askQuestion: (data: { query: string; country: string; language: string }) =>

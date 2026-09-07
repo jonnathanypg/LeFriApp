@@ -85,17 +85,17 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-8">
           {/* Welcome Section */}
-          <div className="bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl p-8 text-white">
+          <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-indigo-950 border border-indigo-700/40 rounded-2xl p-8 text-white shadow-xl shadow-indigo-950/40">
             <h2 className="text-3xl font-bold mb-2">
               {t.welcome}{user?.name ? `, ${user.name.split(' ')[0]}` : ''}!
             </h2>
-            <p className="text-blue-100 text-lg">
+            <p className="text-indigo-200 text-sm sm:text-base">
               {t.welcomeSubtitle}
             </p>
           </div>
@@ -105,17 +105,17 @@ export default function Dashboard() {
             {modeCards.map((card) => (
               <Card 
                 key={card.title}
-                className="card-hover cursor-pointer border border-neutral-200"
+                className="card-hover cursor-pointer bg-slate-900 border-slate-800 text-slate-100 hover:border-slate-700 shadow-lg"
                 onClick={card.onClick}
               >
                 <CardContent className="p-6">
-                  <div className={`w-12 h-12 ${card.iconBg} rounded-xl flex items-center justify-center mb-4`}>
+                  <div className={`w-12 h-12 bg-slate-800 border border-slate-700 rounded-xl flex items-center justify-center mb-4`}>
                     <card.icon className={`${card.iconColor} w-6 h-6`} />
                   </div>
-                  <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                  <h3 className="text-xl font-semibold text-white mb-2">
                     {card.title}
                   </h3>
-                  <p className="text-neutral-600 mb-4 text-sm leading-relaxed">
+                  <p className="text-slate-400 mb-4 text-sm leading-relaxed">
                     {card.description}
                   </p>
                   <div className={`flex items-center ${card.buttonColor} text-sm font-medium`}>
@@ -130,10 +130,10 @@ export default function Dashboard() {
           {/* Recent Activity */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Recent Consultations */}
-            <Card>
+            <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <MessageSquare className="w-5 h-5" />
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <MessageSquare className="w-5 h-5 text-indigo-400" />
                   <span>{t.consultations}</span>
                 </CardTitle>
               </CardHeader>
@@ -141,32 +141,32 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {recentConsultations?.length > 0 ? (
                     recentConsultations.slice(0, 3).map((consultation: any, index: number) => (
-                      <div key={consultation.id || `consultation-${index}`} className="flex items-center space-x-3 p-3 bg-neutral-50 rounded-lg">
-                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <MessageSquare className="w-4 h-4 text-blue-600" />
+                      <div key={consultation.id || `consultation-${index}`} className="flex items-center space-x-3 p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl">
+                        <div className="w-8 h-8 bg-indigo-900/40 border border-indigo-800/50 rounded-lg flex items-center justify-center">
+                          <MessageSquare className="w-4 h-4 text-indigo-400" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-neutral-900 line-clamp-1">
+                          <p className="text-sm font-medium text-slate-200 line-clamp-1">
                             {consultation.query}
                           </p>
-                          <p className="text-xs text-neutral-500">
+                          <p className="text-xs text-slate-500">
                             {new Date(consultation.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-neutral-500">{t.noConsultations}</p>
+                    <p className="text-sm text-slate-500">{t.noConsultations}</p>
                   )}
                 </div>
               </CardContent>
             </Card>
 
             {/* Active Processes */}
-            <Card>
+            <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-lg">
               <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <FileText className="w-5 h-5" />
+                <CardTitle className="flex items-center space-x-2 text-white">
+                  <FileText className="w-5 h-5 text-orange-400" />
                   <span>{t.activeProcesses}</span>
                 </CardTitle>
               </CardHeader>
@@ -174,24 +174,24 @@ export default function Dashboard() {
                 <div className="space-y-3">
                   {activeProcesses?.length > 0 ? (
                     activeProcesses.slice(0, 2).map((process: any, index: number) => (
-                      <div key={process.id || `process-${index}`} className="flex items-center space-x-3 p-3 bg-neutral-50 rounded-lg">
-                        <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
-                          <FileText className="w-4 h-4 text-orange-600" />
+                      <div key={process.id || `process-${index}`} className="flex items-center space-x-3 p-3 bg-slate-950/80 border border-slate-800/80 rounded-xl">
+                        <div className="w-8 h-8 bg-orange-900/40 border border-orange-800/50 rounded-lg flex items-center justify-center">
+                          <FileText className="w-4 h-4 text-orange-400" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium text-neutral-900">
+                          <p className="text-sm font-medium text-slate-200">
                             {process.processType === 'divorcio' && t.processDivorce}
                             {process.processType === 'contrato' && t.processContract}
                             {process.processType === 'laboral' && t.processLabor}
                           </p>
-                          <p className="text-xs text-neutral-500">
+                          <p className="text-xs text-slate-500">
                             {t.step} {process.currentStep + 1} - {process.status === 'in_progress' ? t.inProgress : process.status}
                           </p>
                         </div>
                       </div>
                     ))
                   ) : (
-                    <p className="text-sm text-neutral-500">{t.noProcesses}</p>
+                    <p className="text-sm text-slate-500">{t.noProcesses}</p>
                   )}
                 </div>
               </CardContent>

@@ -145,19 +145,19 @@ export function ProcessList() {
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
+        <div className="flex items-center space-x-4 border-b border-slate-800 pb-4">
           <Link href="/dashboard">
             <Button 
               variant="ghost" 
               size="sm"
-              className="p-2 hover:bg-neutral-100 rounded-lg"
+              className="p-2 hover:bg-slate-800 text-slate-300 rounded-lg"
             >
-              <ArrowLeft className="w-5 h-5 text-neutral-600" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-neutral-900">{translations.myProcesses}</h1>
-            <p className="text-sm text-neutral-500">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-slate-200 to-orange-300 bg-clip-text text-transparent">{translations.myProcesses}</h1>
+            <p className="text-sm text-slate-400">
               {translations.processDescription}
             </p>
           </div>
@@ -166,40 +166,41 @@ export function ProcessList() {
         <div className="flex justify-end">
           <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
             <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
+              <Button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl">
                 <Plus className="h-4 w-4" />
                 {translations.createProcess}
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-md">
+            <DialogContent className="max-w-md bg-slate-900 border-slate-800 text-slate-100">
               <DialogHeader>
-                <DialogTitle>{translations.createProcess}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-white">{translations.createProcess}</DialogTitle>
+                <DialogDescription className="text-slate-400">
                   {translations.processDescription}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <Label htmlFor="title">{translations.processTitle}</Label>
+                  <Label htmlFor="title" className="text-slate-300">{translations.processTitle}</Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder={translations.processTitle}
+                    className="bg-slate-950 border-slate-700 text-white"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="type">{translations.processType}</Label>
+                  <Label htmlFor="type" className="text-slate-300">{translations.processType}</Label>
                   <Select
                     value={formData.type}
                     onValueChange={(value) => setFormData({ ...formData, type: value })}
                     required
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-slate-950 border-slate-700 text-white">
                       <SelectValue placeholder={translations.processType} />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
                       {processTypes.map((type) => (
                         <SelectItem key={type.value} value={type.value}>
                           {type.label}
@@ -209,27 +210,28 @@ export function ProcessList() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="description">{translations.processDescription}</Label>
+                  <Label htmlFor="description" className="text-slate-300">{translations.processDescription}</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder={translations.processDescription}
+                    className="bg-slate-950 border-slate-700 text-white"
                     rows={3}
                   />
                 </div>
                 <div>
-                  <Label htmlFor="priority">{translations.priority}</Label>
+                  <Label htmlFor="priority" className="text-slate-300">{translations.priority}</Label>
                   <Select
                     value={formData.priority}
                     onValueChange={(value: 'low' | 'medium' | 'high') => 
                       setFormData({ ...formData, priority: value })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="bg-slate-950 border-slate-700 text-white">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
                       <SelectItem value="low">{translations.processPriorities.low}</SelectItem>
                       <SelectItem value="medium">{translations.processPriorities.medium}</SelectItem>
                       <SelectItem value="high">{translations.processPriorities.high}</SelectItem>
@@ -237,19 +239,20 @@ export function ProcessList() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="deadline">{translations.processDeadline}</Label>
+                  <Label htmlFor="deadline" className="text-slate-300">{translations.processDeadline}</Label>
                   <Input
                     id="deadline"
                     type="date"
                     value={formData.deadline || ''}
                     onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+                    className="bg-slate-950 border-slate-700 text-white"
                   />
                 </div>
                 <div className="flex gap-2 pt-4">
                   <Button 
                     type="submit" 
                     disabled={createProcessMutation.isPending}
-                    className="flex-1"
+                    className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white"
                   >
                     {createProcessMutation.isPending ? translations.processLoading : translations.createProcess}
                   </Button>
@@ -257,6 +260,7 @@ export function ProcessList() {
                     type="button" 
                     variant="outline" 
                     onClick={() => setShowCreateDialog(false)}
+                    className="border-slate-700 text-slate-300 hover:bg-slate-800"
                   >
                     {translations.cancel}
                   </Button>
@@ -269,17 +273,17 @@ export function ProcessList() {
         <div className="grid gap-4">
           {processes.length > 0 ? (
             processes.map((process) => (
-              <Card key={process.id || process._id} className="hover:shadow-md transition-shadow">
+              <Card key={process.id || process._id} className="bg-slate-900 border-slate-800 text-slate-100 hover:border-slate-700 transition shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-lg">{process.title}</h3>
+                        <h3 className="font-semibold text-lg text-white">{process.title}</h3>
                         <Badge variant={getStatusColor(process.status)}>
                           {getStatusText(process.status)}
                         </Badge>
                       </div>
-                      <p className="text-sm text-neutral-500">{process.description}</p>
+                      <p className="text-sm text-slate-400">{process.description}</p>
                       <div className="flex items-center gap-4 mt-2">
                         <Badge variant={getPriorityColor(process.metadata?.priority)}>
                           {getPriorityText(process.metadata?.priority)}

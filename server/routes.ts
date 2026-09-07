@@ -34,10 +34,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     secret: sessionSecret || 'lefri-ai-session-secret',
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     store: sessionStore,
     cookie: {
       secure: isProd && process.env.DISABLE_SECURE_COOKIE !== 'true',
       httpOnly: true,
+      sameSite: 'lax',
+      path: '/',
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   }));

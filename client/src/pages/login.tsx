@@ -34,8 +34,20 @@ export default function Login() {
       if (params.get('ui') === 'classic') {
         setIsConversational(false);
       }
+      const error = params.get('error');
+      if (error) {
+        let errorDesc = "Error al autenticar con Google. Por favor intenta de nuevo.";
+        if (error === 'no_code') errorDesc = "No se recibió código de autorización de Google.";
+        if (error === 'oauth_failed') errorDesc = "Error al verificar las credenciales con Google.";
+        if (error === 'session') errorDesc = "Error al inicializar la sesión en el servidor.";
+        toast({
+          title: "Error de autenticación",
+          description: errorDesc,
+          variant: "destructive",
+        });
+      }
     }
-  }, []);
+  }, [toast]);
   
   // Form states
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });

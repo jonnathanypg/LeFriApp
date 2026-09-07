@@ -224,10 +224,21 @@ authRouter.get("/google/callback", async (req, res) => {
       }
     }
     
-    req.session.userId = user.id;
-    req.session.save((err: any) => {
+    // Regenerate session to ensure a fresh session ID is issued and
+    // the Set-Cookie header is sent with the redirect response.
+    req.session.regenerate((err: any) => {
       if (err) return res.redirect('/login?error=session');
-      res.redirect('/dashboard');
+      req.session.userId = user.id;
+      req.session.save((saveErr: any) => {
+        if (saveErr) return res.redirect('/login?error=session');
+        if (user.role === 'admin') {
+          return res.redirect('/admin/dashboard');
+        } else if (user.role === 'lawyer') {
+          return res.redirect('/lawyer/dashboard');
+        } else {
+          return res.redirect('/dashboard');
+        }
+      });
     });
   } catch (error) {
     console.error('Google OAuth callback error:', error);

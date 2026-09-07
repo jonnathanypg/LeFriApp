@@ -157,82 +157,82 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="min-h-screen bg-neutral-50 flex flex-col">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Navbar />
 
       <main className="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         
         {/* Welcome Header Banner */}
-        <div className="bg-gradient-to-r from-neutral-900 via-violet-950 to-indigo-950 rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-purple-950 border border-indigo-500/20 rounded-2xl p-8 text-white shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight">
               Panel de Super Administrador
             </h1>
-            <p className="text-neutral-300 text-sm mt-1">
+            <p className="text-slate-300 text-sm mt-1">
               Monitorea el crecimiento de la red LeFriApp y configura los canales automatizados B2C para el público general.
             </p>
           </div>
-          <div className="flex items-center space-x-2 bg-white/10 backdrop-blur border border-white/10 rounded-xl p-3 text-xs">
+          <div className="flex items-center space-x-2 bg-indigo-500/10 backdrop-blur border border-indigo-500/30 rounded-xl p-3 text-xs">
             <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full animate-ping"></span>
-            <span className="font-semibold">Modo Super Admin Activo</span>
+            <span className="font-semibold text-emerald-400">Modo Super Admin Activo</span>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="p-8 text-center text-neutral-500 flex items-center justify-center space-x-2">
-            <RefreshCw className="w-6 h-6 animate-spin text-indigo-600" />
+          <div className="p-8 text-center text-slate-400 flex items-center justify-center space-x-2">
+            <RefreshCw className="w-6 h-6 animate-spin text-indigo-500" />
             <span>Cargando configuraciones y métricas del sistema...</span>
           </div>
         ) : configData && (
           <>
             {/* Stats Metrics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <Card className="shadow border-neutral-200">
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow">
                 <CardContent className="p-6 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Usuarios Totales</p>
-                    <p className="text-3xl font-bold mt-2 text-indigo-600">{configData.stats.totalUsers}</p>
-                    <p className="text-[10px] text-neutral-400 mt-1">
+                    <p className="text-sm font-medium text-slate-400">Usuarios Totales</p>
+                    <p className="text-3xl font-bold mt-2 text-indigo-400">{configData.stats.totalUsers}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">
                       {configData.stats.totalCitizens} ciudadanos | {configData.stats.totalLawyers} abogados
                     </p>
                   </div>
-                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center">
                     <Users className="w-6 h-6" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="shadow border-neutral-200">
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow">
                 <CardContent className="p-6 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Bufetes / Firmas</p>
-                    <p className="text-3xl font-bold mt-2 text-neutral-800">{configData.stats.totalFirms}</p>
-                    <p className="text-[10px] text-neutral-400 mt-1">Empresas legaltech B2B</p>
+                    <p className="text-sm font-medium text-slate-400">Bufetes / Firmas</p>
+                    <p className="text-3xl font-bold mt-2 text-slate-100">{configData.stats.totalFirms}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">Empresas legaltech B2B</p>
                   </div>
-                  <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl flex items-center justify-center">
                     <Briefcase className="w-6 h-6" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="shadow border-neutral-200">
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow">
                 <CardContent className="p-6 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Casos y Expedientes</p>
-                    <p className="text-3xl font-bold mt-2 text-neutral-800">{configData.stats.totalCases}</p>
-                    <p className="text-[10px] text-neutral-400 mt-1">{configData.stats.totalLeads} leads capturados en CRM</p>
+                    <p className="text-sm font-medium text-slate-400">Casos y Expedientes</p>
+                    <p className="text-3xl font-bold mt-2 text-slate-100">{configData.stats.totalCases}</p>
+                    <p className="text-[10px] text-slate-400 mt-1">{configData.stats.totalLeads} leads capturados en CRM</p>
                   </div>
-                  <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                  <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center">
                     <BarChart3 className="w-6 h-6" />
                   </div>
                 </CardContent>
               </Card>
 
-              <Card className="shadow border-neutral-200">
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow">
                 <CardContent className="p-6 flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-neutral-500">Conversaciones Activas</p>
-                    <p className="text-3xl font-bold mt-2 text-violet-600">{configData.stats.totalConversations}</p>
+                    <p className="text-sm font-medium text-slate-400">Conversaciones Activas</p>
+                    <p className="text-3xl font-bold mt-2 text-violet-400">{configData.stats.totalConversations}</p>
                     <p className="text-[10px] text-neutral-400 mt-1">Chats con el Mediador de IA</p>
                   </div>
                   <div className="w-12 h-12 bg-violet-50 text-violet-600 rounded-xl flex items-center justify-center">

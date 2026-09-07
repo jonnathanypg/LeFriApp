@@ -212,7 +212,7 @@ export class ConstituteService {
     limit?: number;
   }): Promise<string[]> {
     try {
-      const { query, country, language = 'es', limit = 3 } = params;
+      const { query, country, language = 'es', limit = 6 } = params;
       const countryName = this.resolveCountry(country);
 
       // 1. Fetch available in-force constitutions for this country
@@ -230,7 +230,7 @@ export class ConstituteService {
       const activeCons = constitutions.find(c => c.in_force) || constitutions[0];
       const consId = activeCons.id;
 
-      // 2. Perform text search against this specific constitution
+      // 2. Perform direct text search against this specific constitution
       const sectionResults = await this.textSearch({
         query,
         cons_id: consId,
@@ -249,7 +249,96 @@ export class ConstituteService {
         }
       }
 
-      // 3. Fallback: topic search if textsearch was empty
+      // 3. Synonym & Semantic expansion map for common search terms
+      const termExpansions: Record<string, string[]> = {
+        juventud: ['jóvenes', 'joven', 'educación', 'participación'],
+        jovenes: ['jóvenes', 'joven', 'educación', 'derechos'],
+        joven: ['jóvenes', 'juventud', 'educación'],
+        adolescente: ['niñez', 'jóvenes', 'protección'],
+        ninez: ['niños', 'niñas', 'familia', 'educación'],
+        trabajo: ['empleo', 'laboral', 'remuneración', 'trabajadores'],
+        salud: ['atención médica', 'seguridad social', 'vida'],
+        vivienda: ['hábitat', 'hogar', 'propiedad'],
+        debido: ['garantías judiciales', 'defensa', 'juez'],
+        proceso: ['debido proceso', 'garantías', 'justicia'],
+        igualdad: ['no discriminación', 'derechos', 'equidad'],
+        libertad: ['expresión', 'movilidad', 'asociación'],
+        alimentos: ['familia', 'pensión', 'hijos', 'niñez']
+      };
+
+      // 4. Tokenize query into meaningful search keywords
+      const rawTokens = query
+        .toLowerCase()
+        .replace(/[^\wáéíóúüñ\s]/gi, ' ')
+        .split(/\s+/)
+        .filter(t => t.length >= 3 && !['para', 'como', 'sobre', 'este', 'esta', 'todo', 'toda', 'unos', 'unas', 'pero', 'ante', 'bajo', 'desde'].includes(t));
+
+      // Try searching with individual keywords via textSearch
+      for (const token of rawTokens) {
+        const tokenRes = await this.textSearch({ query: token, cons_id: consId, language });
+        if (tokenRes && tokenRes[consId] && tokenRes[consId].results && tokenRes[consId].results.length > 0) {
+          const cleaned = tokenRes[consId].results
+            .slice(0, limit)
+            .map((html: string) => this.stripHtml(html))
+            .filter((text: string) => text.length > 20);
+          if (cleaned.length > 0) {
+            return cleaned;
+          }
+        }
+
+        // Try expanded synonyms
+        const expansions = termExpansions[token] || [];
+        for (const exp of expansions) {
+          const expRes = await this.textSearch({ query: exp, cons_id: consId, language });
+          if (expRes && expRes[consId] && expRes[consId].results && expRes[consId].results.length > 0) {
+            const cleaned = expRes[consId].results
+              .slice(0, limit)
+              .map((html: string) => this.stripHtml(html))
+              .filter((text: string) => text.length > 20);
+            if (cleaned.length > 0) {
+              return cleaned;
+            }
+          }
+        }
+      }
+
+      // 5. Deep Fallback: Parse full constitution HTML and match by word root / regex
+      const fullHtml = await this.getConstitutionHtml(consId, language);
+      if (fullHtml && fullHtml.length > 500) {
+        const articleRegex = /<p[^>]*>\s*(Art[ií]culo\s*\d+[^\<]*)\s*<\/p>/gi;
+        const matches = [...fullHtml.matchAll(articleRegex)];
+        const allArticles: { title: string; content: string }[] = [];
+
+        for (let i = 0; i < matches.length; i++) {
+          const title = matches[i][1].trim();
+          const startIdx = matches[i].index || 0;
+          const endIdx = (i + 1 < matches.length) ? (matches[i + 1].index || fullHtml.length) : fullHtml.length;
+          const content = this.stripHtml(fullHtml.substring(startIdx, endIdx));
+          allArticles.push({ title, content });
+        }
+
+        // Create search terms pattern from tokens & expansions
+        const searchTerms = [...rawTokens];
+        rawTokens.forEach(t => {
+          if (termExpansions[t]) searchTerms.push(...termExpansions[t]);
+        });
+
+        if (searchTerms.length > 0) {
+          const regexStr = searchTerms.map(t => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|');
+          const matcher = new RegExp(`\\b(?:${regexStr})`, 'i');
+
+          const matchedArticles = allArticles
+            .filter(a => matcher.test(a.content))
+            .slice(0, limit)
+            .map(a => a.content);
+
+          if (matchedArticles.length > 0) {
+            return matchedArticles;
+          }
+        }
+      }
+
+      // 6. Last Fallback: Topic search
       const topics = ['debido proceso', 'derechos fundamentales', 'trabajo', 'familia', 'igualdad'];
       for (const t of topics) {
         if (query.toLowerCase().includes(t)) {

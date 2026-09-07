@@ -101,31 +101,31 @@ export default function Profile() {
   const totalHours = consultations?.length ? consultations.length * 2.5 : 0;
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Header */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 border-b border-slate-800 pb-4">
             <Button 
               variant="ghost" 
               size="sm"
               onClick={() => setLocation('/dashboard')}
-              className="p-2 hover:bg-neutral-100 rounded-lg"
+              className="p-2 hover:bg-slate-800 text-slate-300 rounded-lg"
             >
-              <ArrowLeft className="w-5 h-5 text-neutral-600" />
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-neutral-900">My Profile</h1>
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-white via-slate-200 to-indigo-300 bg-clip-text text-transparent">Mi Perfil</h1>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Profile Info */}
             <div className="lg:col-span-2">
-              <Card>
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <User className="w-5 h-5" />
+                  <CardTitle className="flex items-center space-x-2 text-white">
+                    <User className="w-5 h-5 text-indigo-400" />
                     <span>{t.personalInformation}</span>
                   </CardTitle>
                 </CardHeader>
@@ -133,50 +133,49 @@ export default function Profile() {
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="name">{t.fullName}</Label>
+                        <Label htmlFor="name" className="text-slate-300">{t.fullName}</Label>
                         <Input
                           id="name"
                           placeholder={t.fullName}
+                          className="bg-slate-950 border-slate-700 text-white"
                           {...register('name')}
                         />
                         {errors.name && (
-                          <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
+                          <p className="text-rose-400 text-sm mt-1">{errors.name.message}</p>
                         )}
                       </div>
                       
                       <div>
-                        <Label htmlFor="email">{t.email}</Label>
+                        <Label htmlFor="email" className="text-slate-300">{t.email}</Label>
                         <Input
                           id="email"
                           type="email"
                           placeholder={t.email}
+                          className="bg-slate-950 border-slate-700 text-white"
                           {...register('email')}
                         />
                         {errors.email && (
-                          <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
+                          <p className="text-rose-400 text-sm mt-1">{errors.email.message}</p>
                         )}
                       </div>
                       
                       <div>
-                        <Label htmlFor="phone">{t.phone}</Label>
+                        <Label htmlFor="phone" className="text-slate-300">{t.phone}</Label>
                         <Input
                           id="phone"
-                          type="tel"
                           placeholder={t.phone}
+                          className="bg-slate-950 border-slate-700 text-white"
                           {...register('phone')}
                         />
-                        {errors.phone && (
-                          <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
-                        )}
                       </div>
                       
                       <div>
-                        <Label htmlFor="country">{t.country}</Label>
-                        <Select onValueChange={(value) => setValue('country', value)}>
-                          <SelectTrigger>
+                        <Label htmlFor="country" className="text-slate-300">{t.country}</Label>
+                        <Select onValueChange={(value) => setValue('country', value)} defaultValue={user?.country || 'EC'}>
+                          <SelectTrigger className="bg-slate-950 border-slate-700 text-white">
                             <SelectValue placeholder={t.country} />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-slate-900 border-slate-800 text-white">
                             {countries.map((country) => (
                               <SelectItem key={country.value} value={country.value}>
                                 {country.label}
@@ -184,18 +183,15 @@ export default function Profile() {
                             ))}
                           </SelectContent>
                         </Select>
-                        {errors.country && (
-                          <p className="text-red-500 text-sm mt-1">{errors.country.message}</p>
-                        )}
                       </div>
                       
-                      <div>
-                        <Label htmlFor="language">{t.language}</Label>
-                        <Select onValueChange={(value) => setValue('language', value)}>
-                          <SelectTrigger>
+                      <div className="md:col-span-2">
+                        <Label htmlFor="language" className="text-slate-300">{t.language}</Label>
+                        <Select onValueChange={(value) => setValue('language', value)} defaultValue={user?.language || 'es'}>
+                          <SelectTrigger className="bg-slate-950 border-slate-700 text-white">
                             <SelectValue placeholder={t.language} />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="bg-slate-900 border-slate-800 text-white">
                             {languages.map((language) => (
                               <SelectItem key={language.value} value={language.value}>
                                 {language.label}
@@ -204,7 +200,7 @@ export default function Profile() {
                           </SelectContent>
                         </Select>
                         {errors.language && (
-                          <p className="text-red-500 text-sm mt-1">{errors.language.message}</p>
+                          <p className="text-rose-400 text-sm mt-1">{errors.language.message}</p>
                         )}
                       </div>
                     </div>
@@ -212,7 +208,7 @@ export default function Profile() {
                     <div className="flex justify-end">
                       <Button 
                         type="submit" 
-                        className="bg-blue-500 hover:bg-blue-600"
+                        className="bg-indigo-600 hover:bg-indigo-500 text-white"
                         disabled={!isDirty || updateProfileMutation.isPending}
                       >
                         {updateProfileMutation.isPending ? t.saving : t.saveChanges}
@@ -225,29 +221,29 @@ export default function Profile() {
             
             <div className="space-y-6">
               {/* Usage Stats */}
-              <Card>
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BarChart3 className="w-5 h-5" />
+                  <CardTitle className="flex items-center space-x-2 text-white">
+                    <BarChart3 className="w-5 h-5 text-indigo-400" />
                     <span>{t.usageStatistics}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">{t.consultationsCompleted}</span>
-                    <span className="text-lg font-bold text-blue-500">
+                    <span className="text-sm text-slate-400">{t.consultationsCompleted}</span>
+                    <span className="text-lg font-bold text-indigo-400">
                       {consultations?.length || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">{t.processesStarted}</span>
-                    <span className="text-lg font-bold text-orange-600">
+                    <span className="text-sm text-slate-400">{t.processesStarted}</span>
+                    <span className="text-lg font-bold text-orange-400">
                       {processes?.length || 0}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">{t.totalTime}</span>
-                    <span className="text-lg font-bold text-neutral-900">
+                    <span className="text-sm text-slate-400">{t.totalTime}</span>
+                    <span className="text-lg font-bold text-white">
                       {totalHours.toFixed(1)}h
                     </span>
                   </div>
@@ -255,25 +251,25 @@ export default function Profile() {
               </Card>
               
               {/* Account Settings */}
-              <Card>
+              <Card className="bg-slate-900 border-slate-800 text-slate-100 shadow-xl">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Settings className="w-5 h-5" />
-                    <span>Account Settings</span>
+                  <CardTitle className="flex items-center space-x-2 text-white">
+                    <Settings className="w-5 h-5 text-indigo-400" />
+                    <span>Configuración</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Email notifications</span>
+                    <span className="text-sm text-slate-400">Notificaciones por Correo</span>
                     <Switch defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">WhatsApp notifications</span>
+                    <span className="text-sm text-slate-400">Notificaciones por WhatsApp</span>
                     <Switch defaultChecked />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-neutral-600">Dark mode</span>
-                    <Switch />
+                    <span className="text-sm text-slate-400">Modo Oscuro (Dark Mode)</span>
+                    <Switch defaultChecked disabled />
                   </div>
                 </CardContent>
               </Card>

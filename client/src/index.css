@@ -88,25 +88,25 @@
   .command-content,
   .accordion-content,
   .tabs-content {
-    @apply bg-white border-gray-200 shadow-lg;
+    @apply bg-slate-900 border-slate-800 text-slate-100 shadow-xl;
   }
 
   /* Fondos específicos para diferentes componentes */
   .select-content {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 
   .dropdown-menu-content {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 
   .dialog-content {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 
   /* Ventana de notas de voz */
   .voice-note-window {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 
   .dark .popover-content,
@@ -119,24 +119,24 @@
   .dark .command-content,
   .dark .accordion-content,
   .dark .tabs-content {
-    @apply bg-gray-900 border-gray-700;
+    @apply bg-slate-900 border-slate-800 text-slate-100;
   }
 
   /* Fondos para elementos de formulario */
   .input,
   .textarea,
   .select-trigger {
-    @apply bg-white border-gray-200;
+    @apply bg-slate-950 border-slate-800 text-slate-100;
   }
 
   .card {
-    @apply bg-white border-gray-200;
+    @apply bg-slate-900 border-slate-800 text-slate-100;
   }
 
   /* Fondos para overlays */
   .dialog-overlay,
   .sheet-overlay {
-    @apply bg-black/50 backdrop-blur-sm;
+    @apply bg-black/70 backdrop-blur-sm;
   }
 
   .dark .dialog-overlay,
@@ -146,79 +146,79 @@
 
   /* Fondos para botones */
   .button {
-    @apply bg-white border-gray-200 hover:bg-gray-50;
+    @apply bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-100;
   }
 
   .button[data-variant="default"] {
-    @apply bg-blue-600 hover:bg-blue-700 text-white border-blue-600;
+    @apply bg-indigo-600 hover:bg-indigo-500 text-white border-indigo-600;
   }
 
   /* Estilos para botones y selectores */
   .button-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white;
+    @apply bg-indigo-600 hover:bg-indigo-500 text-white;
   }
 
   .button-secondary {
-    @apply bg-gray-100 hover:bg-gray-200 text-gray-900;
+    @apply bg-slate-800 hover:bg-slate-700 text-slate-100;
   }
 
   .select-trigger {
-    @apply bg-white border-gray-200 hover:border-blue-500;
+    @apply bg-slate-950 border-slate-800 text-slate-100 hover:border-indigo-500;
   }
 
   .select-item {
-    @apply hover:bg-blue-50;
+    @apply hover:bg-slate-800 text-slate-100;
   }
 
   /* Estilos para tarjetas y contenedores */
   .card {
-    @apply bg-white border-gray-200 shadow-sm;
+    @apply bg-slate-900 border-slate-800 text-slate-100 shadow-sm;
   }
 
   .card-header {
-    @apply bg-gray-50 border-b border-gray-200;
+    @apply bg-slate-900/50 border-b border-slate-800 text-slate-100;
   }
 
   /* Estilos para modales y diálogos */
   .modal-content {
-    @apply bg-white border-gray-200 shadow-xl;
+    @apply bg-slate-900 border-slate-800 text-slate-100 shadow-xl;
   }
 
   .modal-header {
-    @apply bg-gray-50 border-b border-gray-200;
+    @apply bg-slate-900 border-b border-slate-800 text-slate-100;
   }
 
   .modal-footer {
-    @apply bg-gray-50 border-t border-gray-200;
+    @apply bg-slate-900 border-t border-slate-800 text-slate-100;
   }
 
   /* Estilos para menús desplegables */
   .dropdown-menu {
-    @apply bg-white border border-gray-200 shadow-lg;
+    @apply bg-slate-900 border border-slate-800 text-slate-100 shadow-lg;
   }
 
   .dropdown-menu-item {
-    @apply hover:bg-gray-50;
+    @apply hover:bg-slate-800 text-slate-100;
   }
 
   /* Estilos para ventanas emergentes */
   .popover {
-    @apply bg-white border border-gray-200 shadow-lg;
+    @apply bg-slate-900 border border-slate-800 text-slate-100 shadow-lg;
   }
 
   /* Estilos para ventanas de proceso */
   .process-modal {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 
   /* Estilos para ventanas de contacto de emergencia */
   .emergency-contact-modal {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 
   /* Estilos para ventanas de grabación de voz */
   .voice-recording-modal {
-    @apply bg-white border border-gray-200;
+    @apply bg-slate-900 border border-slate-800 text-slate-100;
   }
 }
 

@@ -51,9 +51,8 @@ export const useAuth = create<AuthState>()(
         set({ isLoading: true });
         try {
           const response = await api.getMe();
-          const userData = await response.json();
-          
           if (response.ok) {
+            const userData = await response.json();
             set({ user: userData, isLoading: false, isInitialized: true });
           } else {
             set({ user: null, isLoading: false, isInitialized: true });

@@ -64,16 +64,16 @@ export function Navbar() {
   ];
 
   return (
-    <header className="bg-white shadow-sm border-b border-neutral-200 sticky top-0 z-50">
+    <header className="bg-slate-950/95 border-b border-slate-800 backdrop-blur sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo & Navigation Links */}
           <div className="flex items-center space-x-8">
             <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm shadow-indigo-600/30">
                 <Scale className="w-5 h-5 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-neutral-900">LeFriAI</h1>
+              <h1 className="text-xl font-bold text-white">LeFriApp</h1>
             </Link>
 
             {user && (
@@ -82,8 +82,8 @@ export function Navbar() {
                   href="/dashboard" 
                   className={`px-3 py-2 rounded-lg text-xs font-semibold transition ${
                     location === '/dashboard' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                      ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                      : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
                   {t.dashboard}
@@ -93,8 +93,8 @@ export function Navbar() {
                   href="/consulta" 
                   className={`px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 ${
                     location === '/consulta' 
-                      ? 'bg-blue-50 text-blue-700' 
-                      : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100'
+                      ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30' 
+                      : 'text-slate-300 hover:text-white hover:bg-slate-900'
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
@@ -105,11 +105,11 @@ export function Navbar() {
                   href="/constitucion" 
                   className={`px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 ${
                     location === '/constitucion' 
-                      ? 'bg-indigo-50 text-indigo-700 font-bold' 
-                      : 'text-neutral-600 hover:text-indigo-600 hover:bg-indigo-50/50'
+                      ? 'bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 font-bold' 
+                      : 'text-slate-300 hover:text-indigo-400 hover:bg-slate-900'
                   }`}
                 >
-                  <Scale className="w-3.5 h-3.5 text-indigo-600" />
+                  <Scale className="w-3.5 h-3.5 text-indigo-400" />
                   <span>{t.navConstitution || t.constitution || "Constitución & Derechos"}</span>
                 </Link>
 
@@ -117,11 +117,11 @@ export function Navbar() {
                   href="/documentos" 
                   className={`px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 ${
                     location === '/documentos' 
-                      ? 'bg-emerald-50 text-emerald-700' 
-                      : 'text-neutral-600 hover:text-emerald-600 hover:bg-emerald-50/50'
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                      : 'text-slate-300 hover:text-emerald-400 hover:bg-slate-900'
                   }`}
                 >
-                  <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+                  <BookOpen className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{t.navDocuments || "Documentos"}</span>
                 </Link>
 
@@ -129,11 +129,11 @@ export function Navbar() {
                   href="/processes" 
                   className={`px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 ${
                     location === '/processes' || location.startsWith('/processes/') 
-                      ? 'bg-orange-50 text-orange-700' 
-                      : 'text-neutral-600 hover:text-orange-600 hover:bg-orange-50/50'
+                      ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' 
+                      : 'text-slate-300 hover:text-orange-400 hover:bg-slate-900'
                   }`}
                 >
-                  <FileText className="w-3.5 h-3.5 text-orange-600" />
+                  <FileText className="w-3.5 h-3.5 text-orange-400" />
                   <span>{t.processes}</span>
                 </Link>
 
@@ -141,11 +141,11 @@ export function Navbar() {
                   href="/emergencia" 
                   className={`px-3 py-2 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 ${
                     location === '/emergencia' 
-                      ? 'bg-red-50 text-red-700' 
-                      : 'text-neutral-600 hover:text-red-600 hover:bg-red-50/50'
+                      ? 'bg-red-500/20 text-red-400 border border-red-500/30' 
+                      : 'text-slate-300 hover:text-red-400 hover:bg-slate-900'
                   }`}
                 >
-                  <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
                   <span>{t.emergency}</span>
                 </Link>
               </nav>
@@ -156,10 +156,10 @@ export function Navbar() {
           <div className="flex items-center space-x-4">
             {/* Language Selector */}
             <Select value={language} onValueChange={handleLanguageChange}>
-              <SelectTrigger className="w-[140px] bg-neutral-100 border-neutral-300">
+              <SelectTrigger className="w-[140px] bg-slate-900 border-slate-700 text-slate-200">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
                 {languageOptions.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -171,29 +171,29 @@ export function Navbar() {
             {/* User Menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2">
+                <Button variant="ghost" className="flex items-center space-x-2 text-slate-200 hover:text-white hover:bg-slate-900">
                   <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-blue-500 text-white text-sm">
+                    <AvatarFallback className="bg-indigo-600 text-white text-sm">
                       {getInitials(user?.name || '')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium text-neutral-700">
+                  <span className="text-sm font-medium text-slate-200">
                     {getFirstName(user?.name || '')}
                   </span>
-                  <ChevronDown className="w-4 h-4 text-neutral-500" />
+                  <ChevronDown className="w-4 h-4 text-slate-400" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
+              <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-800 text-slate-200">
+                <DropdownMenuItem onClick={() => handleNavigation('/profile')} className="hover:bg-slate-800 focus:bg-slate-800 text-slate-200 focus:text-white cursor-pointer">
                   <User className="w-4 h-4 mr-2" />
                   {t.profile}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/settings')}>
+                <DropdownMenuItem onClick={() => handleNavigation('/profile')} className="hover:bg-slate-800 focus:bg-slate-800 text-slate-200 focus:text-white cursor-pointer">
                   <Settings className="w-4 h-4 mr-2" />
                   {t.settings}
                 </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+                <DropdownMenuSeparator className="bg-slate-800" />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-slate-800 focus:bg-slate-800 focus:text-red-300 cursor-pointer">
                   <LogOut className="w-4 h-4 mr-2" />
                   {t.logout}
                 </DropdownMenuItem>
