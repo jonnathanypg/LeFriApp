@@ -31,6 +31,7 @@ model User {
 
   emergencyContacts  EmergencyContact[]
   legalProcesses     LegalProcess[]
+  legalDrafts        LegalDraft[]
   consultations      Consultation[]
   emergencyAlerts    EmergencyAlert[]
   conversations      Conversation[]
@@ -189,4 +190,33 @@ model SystemConfig {
   key       String   @unique
   value     Json
   updatedAt DateTime @updatedAt
+}
+
+model LegalDraft {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type            String        // 'laboral_despido', 'reclamo_consumidor', etc.
+  title           String
+  documentContent String        @db.Text
+  facts           String?       @db.Text
+  claimantName    String?
+  claimantId      String?
+  opposingParty   String?
+  country         String        @default("EC")
+  language        String        @default("es")
+  customDetails   String?       @db.Text
+  processId       String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+}
+
+model Session {
+  session_id String  @id @map("session_id") @db.VarChar(128)
+  expires    Int     @map("expires")
+  data       String? @map("data") @db.MediumText
+
+  @@map("sessions")
 }

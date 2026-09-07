@@ -68,6 +68,12 @@ export interface IStorage {
 
   getEmergencyAlerts(userId: string): Promise<EmergencyAlertDocument[]>;
   createEmergencyAlert(alert: InsertEmergencyAlert): Promise<EmergencyAlertDocument>;
+
+  getLegalDrafts(userId: string): Promise<any[]>;
+  getLegalDraft(id: string): Promise<any | undefined>;
+  createLegalDraft(draft: any): Promise<any>;
+  updateLegalDraft(id: string, updates: any): Promise<any>;
+  deleteLegalDraft(id: string): Promise<void>;
 }
 
 export class MemoryStorage implements IStorage {
@@ -175,6 +181,29 @@ export class MemoryStorage implements IStorage {
     const alert = { _id: id, ...insertAlert, createdAt: new Date() } as any;
     this.emergencyAlerts.set(id, alert);
     return alert;
+  }
+  private legalDrafts: Map<string, any> = new Map();
+  async getLegalDrafts(userId: string): Promise<any[]> {
+    return Array.from(this.legalDrafts.values()).filter(d => d.userId === userId).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  async getLegalDraft(id: string): Promise<any | undefined> {
+    return this.legalDrafts.get(id);
+  }
+  async createLegalDraft(draft: any): Promise<any> {
+    const id = Date.now().toString();
+    const newDraft = { id, _id: id, ...draft, createdAt: new Date(), updatedAt: new Date() };
+    this.legalDrafts.set(id, newDraft);
+    return newDraft;
+  }
+  async updateLegalDraft(id: string, updates: any): Promise<any> {
+    const existing = this.legalDrafts.get(id);
+    if (!existing) throw new Error('Legal draft not found');
+    const updated = { ...existing, ...updates, updatedAt: new Date() };
+    this.legalDrafts.set(id, updated);
+    return updated;
+  }
+  async deleteLegalDraft(id: string): Promise<void> {
+    this.legalDrafts.delete(id);
   }
 }
 
@@ -524,6 +553,48 @@ export class PrismaStorage implements IStorage {
         },
       });
       return { ...a, _id: a.id } as any;
+    });
+  }
+
+  async getLegalDrafts(userId: string): Promise<any[]> {
+    return executeWithRetry(async () => {
+      const drafts = await prisma.legalDraft.findMany({
+        where: { userId },
+        orderBy: { updatedAt: 'desc' },
+      });
+      return drafts.map((d: any) => ({ ...d, _id: d.id }));
+    });
+  }
+
+  async getLegalDraft(id: string): Promise<any | undefined> {
+    return executeWithRetry(async () => {
+      const draft = await prisma.legalDraft.findUnique({ where: { id } });
+      return draft ? { ...draft, _id: draft.id } : undefined;
+    });
+  }
+
+  async createLegalDraft(draft: any): Promise<any> {
+    return executeWithRetry(async () => {
+      const d = await prisma.legalDraft.create({
+        data: draft,
+      });
+      return { ...d, _id: d.id };
+    });
+  }
+
+  async updateLegalDraft(id: string, updates: any): Promise<any> {
+    return executeWithRetry(async () => {
+      const d = await prisma.legalDraft.update({
+        where: { id },
+        data: updates,
+      });
+      return { ...d, _id: d.id };
+    });
+  }
+
+  async deleteLegalDraft(id: string): Promise<void> {
+    return executeWithRetry(async () => {
+      await prisma.legalDraft.delete({ where: { id } });
     });
   }
 }

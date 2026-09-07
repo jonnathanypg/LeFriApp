@@ -203,6 +203,71 @@ export class ConstituteService {
   }
 
   /**
+   * Extract all individual articles from the constitution HTML
+   */
+  async getAllArticles(params: { country: string; language?: string }): Promise<{
+    constitution: Constitution | null;
+    totalArticles: number;
+    articles: { id: string; title: string; content: string }[];
+  }> {
+    try {
+      const { country, language = 'es' } = params;
+      const countryName = this.resolveCountry(country);
+      const cacheKey = `all_articles_${countryName}_${language}`;
+
+      if (this.cache.has(cacheKey)) {
+        return this.cache.get(cacheKey);
+      }
+
+      const constitutions = await this.getConstitutions({
+        country: countryName,
+        language,
+        historic: false
+      });
+
+      if (!constitutions || constitutions.length === 0) {
+        return { constitution: null, totalArticles: 0, articles: [] };
+      }
+
+      const activeCons = constitutions.find(c => c.in_force) || constitutions[0];
+      const fullHtml = await this.getConstitutionHtml(activeCons.id, language);
+
+      if (!fullHtml) {
+        return { constitution: activeCons, totalArticles: 0, articles: [] };
+      }
+
+      const articleRegex = /<p[^>]*>\s*(Art[ií]culo\s*\d+[^\<]*)\s*<\/p>/gi;
+      const matches = [...fullHtml.matchAll(articleRegex)];
+      const articles: { id: string; title: string; content: string }[] = [];
+
+      for (let i = 0; i < matches.length; i++) {
+        const title = matches[i][1].trim();
+        const startIdx = matches[i].index || 0;
+        const endIdx = (i + 1 < matches.length) ? (matches[i + 1].index || fullHtml.length) : fullHtml.length;
+        const content = this.stripHtml(fullHtml.substring(startIdx, endIdx));
+        articles.push({
+          id: `art_${i + 1}`,
+          title,
+          content
+        });
+      }
+
+      const result = {
+        constitution: activeCons,
+        totalArticles: articles.length,
+        articles
+      };
+
+      this.cache.set(cacheKey, result);
+      setTimeout(() => this.cache.delete(cacheKey), 86400000); // 24 hr cache
+      return result;
+    } catch (error) {
+      console.warn('[ConstituteService] Error extracting all articles:', error);
+      return { constitution: null, totalArticles: 0, articles: [] };
+    }
+  }
+
+  /**
    * Retrieve structured articles matching a user's legal crisis query
    */
   async getRelevantArticles(params: {

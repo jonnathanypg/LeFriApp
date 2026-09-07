@@ -268,7 +268,8 @@ export default function ConstitucionPage() {
   const t = useTranslations(language);
   const [selectedCountry, setSelectedCountry] = useState(user?.country || 'EC');
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeSearch, setActiveSearch] = useState('debido proceso');
+  const [activeSearch, setActiveSearch] = useState('');
+  const [visibleCount, setVisibleCount] = useState(12);
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
 
@@ -302,7 +303,10 @@ export default function ConstitucionPage() {
   const { data: exploreData, isLoading } = useQuery({
     queryKey: ['/api/citizen/constitution/explore', selectedCountry, activeSearch],
     queryFn: async () => {
-      const res = await fetch(`/api/citizen/constitution/explore?country=${selectedCountry}&q=${encodeURIComponent(activeSearch)}`);
+      const url = activeSearch
+        ? `/api/citizen/constitution/explore?country=${selectedCountry}&q=${encodeURIComponent(activeSearch)}&limit=100`
+        : `/api/citizen/constitution/explore?country=${selectedCountry}&q=all&limit=200`;
+      const res = await fetch(url);
       if (!res.ok) throw new Error('Error al cargar artículos constitucionales');
       return await res.json();
     }
@@ -342,8 +346,12 @@ export default function ConstitucionPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!searchQuery.trim()) return;
-    setActiveSearch(searchQuery.trim());
+    if (!searchQuery.trim()) {
+      setActiveSearch('');
+    } else {
+      setActiveSearch(searchQuery.trim());
+    }
+    setVisibleCount(12);
     setSelectedArticle(null);
     setExplanation(null);
   };
@@ -375,12 +383,18 @@ export default function ConstitucionPage() {
             </div>
             <p className="text-xs sm:text-sm text-slate-400">
               {t.constitutionSubtitle || "Explorador pedagógico de normas constitucionales y garantías ciudadanas conectado a ConstituteProject API."}
+              {exploreData?.constitution?.title && (
+                <span className="ml-2 text-indigo-400 font-medium">
+                  • {exploreData.constitution.title} ({exploreData.totalArticles} artículos totales)
+                </span>
+              )}
             </p>
           </div>
 
           <div className="flex items-center space-x-3">
             <Select value={selectedCountry} onValueChange={(val) => {
               setSelectedCountry(val);
+              setVisibleCount(12);
               setSelectedArticle(null);
               setExplanation(null);
             }}>
@@ -410,6 +424,22 @@ export default function ConstitucionPage() {
                 className="pl-10 bg-slate-900 border-slate-800 text-slate-100 rounded-xl placeholder:text-slate-500"
               />
             </div>
+            {activeSearch && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery('');
+                  setActiveSearch('');
+                  setVisibleCount(12);
+                  setSelectedArticle(null);
+                  setExplanation(null);
+                }}
+                className="border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 rounded-xl text-xs px-3"
+              >
+                Ver todos
+              </Button>
+            )}
             <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl px-5">
               {t.constitutionSearchButton || t.search || "Buscar"}
             </Button>
@@ -417,21 +447,46 @@ export default function ConstitucionPage() {
 
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="text-slate-500 py-1 font-medium">{t.frequentTopics || "Temas frecuentes:"}</span>
-            {topicSuggestions.map((topic) => (
-              <button
-                key={topic.query}
-                type="button"
-                onClick={() => {
-                  setSearchQuery(topic.query);
-                  setActiveSearch(topic.query);
-                  setSelectedArticle(null);
-                  setExplanation(null);
-                }}
-                className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-white transition font-medium flex items-center gap-1 cursor-pointer"
-              >
-                {topic.label}
-              </button>
-            ))}
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setActiveSearch('');
+                setVisibleCount(12);
+                setSelectedArticle(null);
+                setExplanation(null);
+              }}
+              className={`px-3 py-1.5 rounded-xl border transition font-medium flex items-center gap-1 cursor-pointer ${
+                !activeSearch
+                  ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200'
+                  : 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-white'
+              }`}
+            >
+              📖 Todos los artículos
+            </button>
+            {topicSuggestions.map((topic) => {
+              const isTopicActive = activeSearch.toLowerCase() === topic.query.toLowerCase();
+              return (
+                <button
+                  key={topic.query}
+                  type="button"
+                  onClick={() => {
+                    setSearchQuery(topic.query);
+                    setActiveSearch(topic.query);
+                    setVisibleCount(12);
+                    setSelectedArticle(null);
+                    setExplanation(null);
+                  }}
+                  className={`px-3 py-1.5 rounded-xl border transition font-medium flex items-center gap-1 cursor-pointer ${
+                    isTopicActive
+                      ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200'
+                      : 'bg-slate-900 border-slate-800 hover:border-indigo-500/50 text-slate-300 hover:text-white'
+                  }`}
+                >
+                  {topic.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -439,9 +494,19 @@ export default function ConstitucionPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Column: Articles List */}
           <div className="lg:col-span-6 space-y-4">
-            <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
-              {t.articlesFound || "Artículos & Disposiciones Halladas"} ({exploreData?.articles?.length || 0})
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">
+                {t.articlesFound || "Artículos & Disposiciones"} 
+                <span className="text-indigo-400 font-bold ml-1.5">
+                  ({Math.min(visibleCount, exploreData?.articles?.length || 0)} de {exploreData?.searchCount || exploreData?.articles?.length || 0})
+                </span>
+              </h2>
+              {exploreData?.totalArticles && (
+                <span className="text-xs text-slate-500">
+                  Total Constitución: {exploreData.totalArticles} arts.
+                </span>
+              )}
+            </div>
 
             {isLoading ? (
               <div className="p-8 text-center bg-slate-900/50 border border-slate-800 rounded-2xl">
@@ -450,7 +515,7 @@ export default function ConstitucionPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {exploreData?.articles?.map((art: any) => {
+                {exploreData?.articles?.slice(0, visibleCount).map((art: any) => {
                   const isSelected = selectedArticle?.id === art.id;
                   return (
                     <Card
@@ -481,6 +546,20 @@ export default function ConstitucionPage() {
                     </Card>
                   );
                 })}
+
+                {/* Load More Button */}
+                {exploreData?.articles && visibleCount < exploreData.articles.length && (
+                  <div className="pt-2 text-center">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setVisibleCount(prev => prev + 12)}
+                      className="w-full py-2 border-slate-800 bg-slate-900/80 hover:bg-slate-800 text-slate-300 text-xs rounded-xl font-medium"
+                    >
+                      Cargar más artículos ({exploreData.articles.length - visibleCount} restantes)
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
           </div>

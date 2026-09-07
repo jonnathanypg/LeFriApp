@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,8 +15,10 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { 
   FileText, Sparkles, Download, ExternalLink, Copy, Check, 
-  Briefcase, AlertCircle, ShieldAlert, Users, MessageSquare, Mic, ArrowRight, FileDown
+  Briefcase, AlertCircle, ShieldAlert, Users, MessageSquare, Mic, ArrowRight, FileDown,
+  FolderGit2, Trash2, Clock, Plus
 } from 'lucide-react';
+import { Link } from 'wouter';
 import { toast } from '@/hooks/use-toast';
 
 const DOCUMENT_TYPES = [
@@ -84,6 +86,7 @@ export default function DocumentosPage() {
     },
     onSuccess: (data) => {
       setGeneratedDoc(data);
+      queryClient.invalidateQueries({ queryKey: ['/api/citizen/documents/drafts'] });
       toast({
         title: t.docGeneratedSuccess || "¡Documento redactado con éxito!",
         description: t.docGeneratedSuccessDesc || "Revisa el borrador legal a la derecha para descargarlo o exportarlo."
@@ -199,6 +202,87 @@ export default function DocumentosPage() {
     }
   };
 
+  const queryClient = useQueryClient();
+
+  const { data: savedDrafts = [], isLoading: isLoadingDrafts } = useQuery<any[]>({
+    queryKey: ['/api/citizen/documents/drafts'],
+    queryFn: async () => {
+      const res = await fetch('/api/citizen/documents/drafts');
+      if (!res.ok) return [];
+      return await res.json();
+    },
+    enabled: !!user
+  });
+
+  const convertToProcessMutation = useMutation({
+    mutationFn: async (draftId: string) => {
+      const res = await fetch(`/api/citizen/documents/drafts/${draftId}/convert-to-process`, {
+        method: 'POST',
+      });
+      if (!res.ok) throw new Error('Error al vincular el borrador a un proceso');
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/citizen/documents/drafts'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/processes'] });
+      toast({
+        title: "¡Expediente de Proceso creado!",
+        description: `El documento ahora forma parte de tu caso en Procesos Legales.`,
+      });
+      if (generatedDoc?.id) {
+        setGeneratedDoc({ ...generatedDoc, processId: data.process?._id || data.process?.id });
+      }
+    },
+    onError: (err: any) => {
+      toast({
+        title: t.error || "Error",
+        description: err.message || "No se pudo convertir a proceso.",
+        variant: "destructive"
+      });
+    }
+  });
+
+  const deleteDraftMutation = useMutation({
+    mutationFn: async (draftId: string) => {
+      const res = await fetch(`/api/citizen/documents/drafts/${draftId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error('Error al eliminar borrador');
+      return await res.json();
+    },
+    onSuccess: (_, deletedId) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/citizen/documents/drafts'] });
+      if (generatedDoc?.id === deletedId) {
+        setGeneratedDoc(null);
+      }
+      toast({ title: "Borrador eliminado", description: "El borrador legal se eliminó de tu historial." });
+    }
+  });
+
+  const handleSelectSavedDraft = (draft: any) => {
+    setSelectedType(draft.type || 'laboral_despido');
+    setTitle(draft.title || '');
+    setFacts(draft.facts || '');
+    setClaimantName(draft.claimantName || '');
+    setClaimantId(draft.claimantId || '');
+    setOpposingParty(draft.opposingParty || '');
+    setCountry(draft.country || 'EC');
+    setCustomDetails(draft.customDetails || '');
+    setGeneratedDoc(draft);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    toast({
+      title: "Borrador cargado",
+      description: `Cargado: "${draft.title}". Puedes continuar editándolo o exportándolo.`,
+    });
+  };
+
+  const handleStartNewDraft = () => {
+    setGeneratedDoc(null);
+    setTitle('');
+    setFacts('');
+    setCustomDetails('');
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <Navbar />
@@ -214,10 +298,89 @@ export default function DocumentosPage() {
               {t.documentsTitle || "Estudio de Borradores de Documentos, Oficios y Denuncias"}
             </h1>
           </div>
-          <p className="text-xs sm:text-sm text-slate-400">
-            {t.documentsSubtitle || "Redacta en segundos cartas, oficios formales, peticiones y minutas legales con fundamentos normativos listos para exportar a PDF y Google Docs."}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs sm:text-sm text-slate-400">
+              {t.documentsSubtitle || "Redacta en segundos cartas, oficios formales, peticiones y minutas legales con fundamentos normativos listos para exportar a PDF y Google Docs."}
+            </p>
+            {generatedDoc && (
+              <Button
+                size="sm"
+                onClick={handleStartNewDraft}
+                className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-xl flex items-center space-x-1.5 flex-shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Nuevo Borrador</span>
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Saved Drafts History Banner if authenticated */}
+        {savedDrafts && savedDrafts.length > 0 && (
+          <div className="mb-8 p-4 bg-slate-900/70 border border-slate-800 rounded-2xl">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center space-x-2">
+                <Clock className="w-4 h-4 text-indigo-400" />
+                <h3 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
+                  Mis Borradores Guardados ({savedDrafts.length})
+                </h3>
+              </div>
+              <span className="text-[11px] text-slate-500">Haz clic en cualquier borrador para retomarlo</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {savedDrafts.map((d: any) => {
+                const isCurrent = generatedDoc?.id === d.id;
+                return (
+                  <div
+                    key={d.id}
+                    onClick={() => handleSelectSavedDraft(d)}
+                    className={`p-3.5 rounded-xl border transition text-left cursor-pointer flex flex-col justify-between space-y-2.5 ${
+                      isCurrent
+                        ? 'bg-indigo-950/40 border-indigo-500 shadow-md shadow-indigo-500/10'
+                        : 'bg-slate-950/70 border-slate-800/90 hover:border-slate-700 hover:bg-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <div className="text-xs font-semibold text-slate-200 truncate">{d.title}</div>
+                        <div className="text-[10px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                          <Badge variant="outline" className="text-[9px] px-1.5 py-0 border-indigo-500/30 text-indigo-300">
+                            {d.type?.replace('_', ' ')}
+                          </Badge>
+                          {d.processId && (
+                            <Badge className="text-[9px] px-1.5 py-0 bg-emerald-500/20 text-emerald-300 border-0">
+                              En Proceso
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteDraftMutation.mutate(d.id);
+                        }}
+                        className="h-6 w-6 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-md"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 line-clamp-2 italic">
+                      {d.facts || "Sin narrativa previa..."}
+                    </p>
+
+                    <div className="text-[10px] text-slate-500 flex items-center justify-between pt-1 border-t border-slate-800/60">
+                      <span>{new Date(d.createdAt).toLocaleDateString()}</span>
+                      <span className="text-indigo-400 hover:underline">Retomar borrador →</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Left Column: Drafter Form */}
@@ -386,6 +549,30 @@ export default function DocumentosPage() {
 
                   {generatedDoc && (
                     <div className="flex items-center space-x-2">
+                      {generatedDoc.processId ? (
+                        <Link href={`/processes/${generatedDoc.processId}`}>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs border-emerald-500/40 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 rounded-lg px-2.5 py-1"
+                          >
+                            <FolderGit2 className="w-3.5 h-3.5 mr-1" />
+                            <span>Ver en Procesos</span>
+                          </Button>
+                        </Link>
+                      ) : generatedDoc.id && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => convertToProcessMutation.mutate(generatedDoc.id)}
+                          disabled={convertToProcessMutation.isPending}
+                          className="text-xs border-indigo-500/40 bg-indigo-500/10 text-indigo-300 hover:bg-indigo-500/20 rounded-lg px-2.5 py-1"
+                        >
+                          <FolderGit2 className="w-3.5 h-3.5 mr-1" />
+                          <span>{convertToProcessMutation.isPending ? 'Vinculando...' : 'Iniciar Proceso'}</span>
+                        </Button>
+                      )}
+
                       <Button
                         size="sm"
                         variant="outline"

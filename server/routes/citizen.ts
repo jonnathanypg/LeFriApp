@@ -429,13 +429,29 @@ citizenRouter.get("/cases", requireAuth, async (req: any, res) => {
 citizenRouter.get("/constitution/explore", async (req: any, res) => {
   try {
     const country = (req.query.country as string) || "EC";
-    const q = (req.query.q as string) || "derechos fundamentales debido proceso";
+    const q = (req.query.q as string)?.trim();
+    const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 50;
 
+    // Get all articles and constitution header info
+    const fullInfo = await constituteService.getAllArticles({ country, language: "es" });
+
+    // If no search query is specified or explicitly "all", return all constitutional articles
+    if (!q || q.toLowerCase() === "all" || q.toLowerCase() === "todos") {
+      res.json({
+        constitution: fullInfo.constitution,
+        totalArticles: fullInfo.totalArticles,
+        searchCount: fullInfo.totalArticles,
+        articles: fullInfo.articles.slice(0, limit)
+      });
+      return;
+    }
+
+    // Otherwise search using relevant articles logic with dynamic limit
     const articles = await constituteService.getRelevantArticles({
       query: q,
       country,
       language: "es",
-      limit: 6
+      limit: limit || 50
     });
 
     const structuredArticles = articles.map((content, idx) => {
@@ -451,7 +467,12 @@ citizenRouter.get("/constitution/explore", async (req: any, res) => {
       };
     });
 
-    res.json({ articles: structuredArticles });
+    res.json({
+      constitution: fullInfo.constitution,
+      totalArticles: fullInfo.totalArticles,
+      searchCount: structuredArticles.length,
+      articles: structuredArticles
+    });
   } catch (error: any) {
     console.error("[CitizenRouter] Error in /constitution/explore:", error);
     res.status(500).json({ error: "Failed to explore constitution" });
@@ -528,14 +549,155 @@ El documento debe tener la estructura jurídica formal habitual del país (${cou
 Redacta el texto completo listo para revisión o impresión en formato Markdown limpio.`;
 
     const documentContent = await skillAdapter.generate(prompt);
+    
+    // Auto-save draft if user is authenticated
+    let savedDraft: any = null;
+    const userId = req.session?.userId;
+    if (userId) {
+      try {
+        savedDraft = await storage.createLegalDraft({
+          userId,
+          type,
+          title: title || "Documento Legal Redactado",
+          documentContent,
+          facts: facts || '',
+          claimantName: claimantName || '',
+          claimantId: claimantId || '',
+          opposingParty: opposingParty || '',
+          country,
+          language,
+          customDetails: customDetails || ''
+        });
+      } catch (saveErr) {
+        console.warn("[CitizenRouter] Failed to auto-save draft:", saveErr);
+      }
+    }
+
     res.json({
+      id: savedDraft?.id,
       title: title || "Documento Legal Redactado",
       documentContent,
-      createdAt: new Date().toISOString()
+      facts,
+      claimantName,
+      claimantId,
+      opposingParty,
+      country,
+      type,
+      customDetails,
+      createdAt: savedDraft?.createdAt || new Date().toISOString()
     });
   } catch (error: any) {
     console.error("[CitizenRouter] Error in /documents/generate:", error);
     res.status(500).json({ error: "Failed to generate document" });
+  }
+});
+
+/**
+ * Get Saved Legal Drafts for Authenticated User
+ */
+citizenRouter.get("/documents/drafts", requireAuth, async (req: any, res) => {
+  try {
+    const drafts = await storage.getLegalDrafts(req.userId);
+    res.json(drafts);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in GET /documents/drafts:", error);
+    res.status(500).json({ error: "Failed to fetch drafts" });
+  }
+});
+
+/**
+ * Update an existing Legal Draft
+ */
+citizenRouter.put("/documents/drafts/:id", requireAuth, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const draft = await storage.getLegalDraft(id);
+    if (!draft || draft.userId !== req.userId) {
+      return res.status(404).json({ error: "Draft not found" });
+    }
+    const updated = await storage.updateLegalDraft(id, req.body);
+    res.json(updated);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in PUT /documents/drafts/:id:", error);
+    res.status(500).json({ error: "Failed to update draft" });
+  }
+});
+
+/**
+ * Delete a Legal Draft
+ */
+citizenRouter.delete("/documents/drafts/:id", requireAuth, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const draft = await storage.getLegalDraft(id);
+    if (!draft || draft.userId !== req.userId) {
+      return res.status(404).json({ error: "Draft not found" });
+    }
+    await storage.deleteLegalDraft(id);
+    res.json({ success: true });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in DELETE /documents/drafts/:id:", error);
+    res.status(500).json({ error: "Failed to delete draft" });
+  }
+});
+
+/**
+ * Convert or Link a Draft to a Legal Process
+ */
+citizenRouter.post("/documents/drafts/:id/convert-to-process", requireAuth, async (req: any, res) => {
+  try {
+    const { id } = req.params;
+    const draft = await storage.getLegalDraft(id);
+    if (!draft || draft.userId !== req.userId) {
+      return res.status(404).json({ error: "Draft not found" });
+    }
+
+    // Map document type to process category
+    const categoryMap: Record<string, string> = {
+      'laboral_despido': 'laboral',
+      'reclamo_consumidor': 'administrativo',
+      'derecho_peticion': 'constitucional',
+      'denuncia_general': 'penal',
+      'pension_alimentos': 'familia'
+    };
+
+    const processType = categoryMap[draft.type] || 'otros';
+
+    const defaultSteps = [
+      { id: '1', title: 'Redacción y Preparación de Pruebas', description: `Borrador formal "${draft.title}" preparado y respaldos adjuntos.`, completed: true, documents: [draft.title], requirements: [] },
+      { id: '2', title: 'Radicación / Presentación de Minuta u Oficio', description: 'Presentar formalmente ante la entidad o juzgado competente.', completed: false, documents: [], requirements: [] },
+      { id: '3', title: 'Notificación a la Contraparte', description: `Esperar respuesta o comparecencia de ${draft.opposingParty || 'la parte requerida'}.`, completed: false, documents: [], requirements: [] },
+      { id: '4', title: 'Audiencia o Diligencia de Conciliación', description: 'Comparecer a la instancia de resolución de conflicto.', completed: false, documents: [], requirements: [] },
+      { id: '5', title: 'Resolución Final o Sentencia', description: 'Emisión de acuerdo, acta de finiquito o resolución definitiva.', completed: false, documents: [], requirements: [] },
+    ];
+
+    const newProcess = await storage.createLegalProcess({
+      userId: req.userId,
+      title: draft.title,
+      type: processType,
+      description: `Proceso legal iniciado a partir del borrador: ${draft.title}. Contraparte: ${draft.opposingParty || 'N/A'}. Hechos: ${draft.facts || 'Sin antecedentes registrados.'}`,
+      status: 'in_progress',
+      progress: 20,
+      currentStep: 1,
+      totalSteps: defaultSteps.length,
+      steps: defaultSteps,
+      requiredDocuments: ['Copia de Cédula/Identificación', draft.title],
+      constitutionalArticles: [],
+      metadata: {
+        priority: 'medium',
+        opposingParty: draft.opposingParty || '',
+        claimantName: draft.claimantName || '',
+        draftId: draft.id
+      }
+    } as any);
+
+    // Update draft with processId
+    await storage.updateLegalDraft(id, { processId: newProcess._id || newProcess.id });
+
+    res.status(201).json({ success: true, process: newProcess });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in convert-to-process:", error);
+    res.status(500).json({ error: error.message || "Failed to convert draft to process" });
   }
 });
 
