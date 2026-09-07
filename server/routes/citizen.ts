@@ -609,4 +609,88 @@ citizenRouter.get("/system/settings", async (_req, res) => {
   }
 });
 
+/**
+ * Legal Processes Endpoints (/api/processes)
+ */
+citizenRouter.get("/processes", requireAuth, async (req: any, res) => {
+  try {
+    const processes = await storage.getLegalProcesses(req.userId);
+    res.json(processes);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in GET /processes:", error);
+    res.status(500).json({ error: "Failed to fetch processes" });
+  }
+});
+
+citizenRouter.get("/processes/:id", requireAuth, async (req: any, res) => {
+  try {
+    const process = await storage.getLegalProcess(req.params.id);
+    if (!process) {
+      return res.status(404).json({ error: "Process not found" });
+    }
+    res.json(process);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in GET /processes/:id:", error);
+    res.status(500).json({ error: "Failed to fetch process" });
+  }
+});
+
+citizenRouter.post("/processes", requireAuth, async (req: any, res) => {
+  try {
+    const { title, type, description, priority, deadline, steps, requiredDocuments, constitutionalArticles, metadata } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({ error: "Title is required" });
+    }
+
+    const defaultSteps = steps || [
+      { id: '1', title: 'Evaluación y Recolección de Pruebas', description: 'Reunir comprobantes, testigos y narrativa detallada.', completed: true, documents: [], requirements: [] },
+      { id: '2', title: 'Redacción del Escrito Inicial', description: 'Elaboración de minuta o petición formal.', completed: false, documents: [], requirements: [] },
+      { id: '3', title: 'Radicación / Presentación Formal', description: 'Ingreso ante autoridad judicial o administrativa competente.', completed: false, documents: [], requirements: [] },
+      { id: '4', title: 'Seguimiento y Notificación', description: 'Esperar contestación y comparecencia de la contraparte.', completed: false, documents: [], requirements: [] },
+      { id: '5', title: 'Resolución o Acuerdo', description: 'Emisión de sentencia, acta de mediación o finiquito.', completed: false, documents: [], requirements: [] },
+    ];
+
+    const newProcess = await storage.createLegalProcess({
+      userId: req.userId,
+      title,
+      type: type || 'otros',
+      description: description || '',
+      status: 'in_progress',
+      progress: 20,
+      currentStep: 1,
+      totalSteps: defaultSteps.length,
+      steps: defaultSteps,
+      requiredDocuments: requiredDocuments || ['Copia de C.I.', 'Documentos probatorios'],
+      constitutionalArticles: constitutionalArticles || [],
+      metadata: {
+        priority: priority || 'medium',
+        deadline: deadline || undefined,
+        ...(metadata || {})
+      }
+    } as any);
+
+    res.status(201).json(newProcess);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in POST /processes:", error);
+    res.status(500).json({ error: error.message || "Failed to create process" });
+  }
+});
+
+citizenRouter.patch("/processes/:id", requireAuth, async (req: any, res) => {
+  try {
+    const existing = await storage.getLegalProcess(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ error: "Process not found" });
+    }
+
+    const updated = await storage.updateLegalProcess(req.params.id, req.body);
+    res.json(updated);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in PATCH /processes/:id:", error);
+    res.status(500).json({ error: "Failed to update process" });
+  }
+});
+
+
 

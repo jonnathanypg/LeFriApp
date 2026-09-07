@@ -52,6 +52,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.url = "/ask";
     citizenRouter(req, res, next);
   });
+  // Support direct /api/processes and /api/consultations for citizen components
+  app.use("/api/processes", (req, res, next) => {
+    req.url = "/processes" + (req.url === "/" ? "" : req.url);
+    citizenRouter(req, res, next);
+  });
+  app.use("/api/consultations", (req, res, next) => {
+    req.url = "/consultations" + (req.url === "/" ? "" : req.url);
+    citizenRouter(req, res, next);
+  });
   app.use("/api/lawyer", lawfirmRouter);
   app.use("/api/lawfirm", lawfirmRouter); // Ensure lawfirm is also mapped if needed
   app.use("/api/billing", billingRouter);

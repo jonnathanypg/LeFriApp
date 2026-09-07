@@ -111,10 +111,11 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
     }
   };
 
-  const handleFinalize = () => {
+  const handleFinalize = async () => {
+    setLoading(true);
     const payload = {
       category,
-      title,
+      title: title || 'Expediente Legal Inicial',
       description,
       incidentDate,
       location,
@@ -123,11 +124,48 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
       wantsLawyerMatch,
       groundingArticles
     };
-    toast({
-      title: "Triaje Legal Completado",
-      description: "Tu expediente inicial ha sido registrado correctamente en LeFriApp.",
-    });
-    if (onComplete) onComplete(payload);
+
+    try {
+      const res = await fetch('/api/processes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: payload.title,
+          type: category || 'otros',
+          description: description ? `${description}\n\n[Lugar: ${location || 'N/A'}] [Fecha: ${incidentDate || 'N/A'}] [Parte contraria: ${opposingParty || 'N/A'}]` : 'Expediente registrado desde Consulta Legal',
+          priority: viabilityScore && viabilityScore > 75 ? 'high' : 'medium',
+          constitutionalArticles: groundingArticles,
+          metadata: {
+            category,
+            viabilityScore,
+            location,
+            incidentDate,
+            opposingParty,
+            aiDiagnosis
+          }
+        })
+      });
+
+      if (!res.ok) {
+        throw new Error('Error al registrar en procesos');
+      }
+
+      const createdProcess = await res.json();
+      toast({
+        title: "Proceso Guardado Exitosamente",
+        description: `Tu caso ha sido guardado en 'Mis Procesos'.`,
+      });
+      if (onComplete) onComplete({ ...payload, processId: createdProcess.id || createdProcess._id });
+    } catch (err: any) {
+      console.error('Error saving process:', err);
+      toast({
+        title: "Triaje Legal Completado",
+        description: "Tu caso fue analizado y registrado.",
+      });
+      if (onComplete) onComplete(payload);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -345,7 +383,8 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300">
+            {/* Oculto temporalmente según requerimiento: Derivación a abogado */}
+            {/* <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-300">
               <label className="flex items-center space-x-2 cursor-pointer">
                 <input
                   type="checkbox"
@@ -355,7 +394,7 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
                 />
                 <span>Derivar mi expediente de forma gratuita a un abogado afiliado</span>
               </label>
-            </div>
+            </div> */}
           </div>
         )}
       </CardContent>
@@ -392,9 +431,11 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
           <Button
             type="button"
             onClick={handleFinalize}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold py-2.5 shadow-lg shadow-emerald-500/20"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-semibold py-2.5 shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
           >
-            Guardar Expediente & Conectar Abogado
+            <CheckCircle2 className="h-4 w-4" />
+            <span>{loading ? "Guardando en Procesos..." : "Guardar en Mis Procesos"}</span>
           </Button>
         )}
       </CardFooter>

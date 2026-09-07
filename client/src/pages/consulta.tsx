@@ -116,9 +116,9 @@ export default function Consulta() {
 
           {/* Mode Rendering */}
           {mode === 'wizard' ? (
-            <LegalIntakeWizard onComplete={() => setMode('chat')} />
+            <LegalIntakeWizard onComplete={(_data) => setLocation('/processes')} />
           ) : (
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 backdrop-blur-xl shadow-2xl">
+            <div className="w-full">
               <StreamingChatInterface country={selectedCountry} />
             </div>
           )}
