@@ -7,6 +7,7 @@ import { geminiService } from "../services/gemini";
 import { whatsAppService } from "../services/whatsapp";
 import { emailService } from "../services/email";
 import { voiceService } from "../services/voice";
+import { transcriptionService } from "../services/transcription";
 import { skillAdapter } from "../services/skill-adapter";
 import { prisma, executeWithRetry } from "../prisma-client";
 import {
@@ -689,6 +690,165 @@ citizenRouter.patch("/processes/:id", requireAuth, async (req: any, res) => {
   } catch (error: any) {
     console.error("[CitizenRouter] Error in PATCH /processes/:id:", error);
     res.status(500).json({ error: "Failed to update process" });
+  }
+});
+
+/**
+ * Speech-To-Text Audio Transcription via MediaSuite Central API (media.weblifetech.com)
+ * Handles audio uploads from legal intake wizard, dynamic chat, and legal document generator.
+ */
+citizenRouter.post("/transcribe", upload.single("file"), async (req: any, res) => {
+  try {
+    const file = req.file || (req.files && req.files[0]);
+    if (!file) {
+      return res.status(400).json({ error: "No audio file provided" });
+    }
+
+    console.log(`[CitizenRouter] Received audio for transcription: ${file.originalname || 'audio.webm'} (${file.size} bytes)`);
+    const transcription = await transcriptionService.transcribeAudioBuffer(file.buffer, file.originalname || 'audio.webm');
+
+    res.json({
+      success: true,
+      text: transcription || ""
+    });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /transcribe:", error);
+    res.status(500).json({ error: error.message || "Failed to transcribe audio" });
+  }
+});
+
+/**
+ * Voice Recording Upload & Storage endpoint (/api/voice/upload or /api/citizen/voice/upload)
+ * Saves recording metadata and performs MediaSuite STT transcription.
+ */
+citizenRouter.post("/voice/upload", upload.single("audio"), async (req: any, res) => {
+  try {
+    const file = req.file || (req.files && req.files[0]);
+    if (!file) {
+      return res.status(400).json({ error: "No audio file provided" });
+    }
+
+    const userId = req.userId || req.session?.userId || (req.headers['x-user-id'] ? parseInt(req.headers['x-user-id']) : 1);
+    const type = (req.body.type as any) || 'consultation';
+
+    console.log(`[CitizenRouter] Uploading voice recording for user ${userId}, type ${type}, size ${file.size} bytes`);
+    
+    // Save recording to voiceService
+    const saved = await voiceService.saveVoiceRecording({
+      userId,
+      audioBuffer: file.buffer,
+      type,
+      originalName: file.originalname || `voice_${Date.now()}.webm`
+    });
+
+    // Also attempt transcription via MediaSuite STT
+    let transcriptionText = "";
+    try {
+      transcriptionText = await transcriptionService.transcribeAudioBuffer(file.buffer, file.originalname || 'audio.webm');
+    } catch (sttErr: any) {
+      console.warn("[CitizenRouter] Transcription during voice/upload fallback:", sttErr.message);
+    }
+
+    const url = voiceService.getVoiceRecordingUrl(saved.id);
+
+    res.status(201).json({
+      id: saved.id,
+      url,
+      filename: saved.filename,
+      transcription: transcriptionText,
+      text: transcriptionText
+    });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /voice/upload:", error);
+    res.status(500).json({ error: error.message || "Failed to upload voice recording" });
+  }
+});
+
+/**
+ * Emergency SOS Alert with Voice Recording
+ */
+citizenRouter.post("/emergency/with-voice", upload.single("voiceNote"), async (req: any, res) => {
+  try {
+    const { latitude, longitude, address } = req.body;
+    const file = req.file;
+
+    const userId = req.userId || req.session?.userId || (req.headers['x-user-id'] ? parseInt(req.headers['x-user-id']) : 1);
+    const user = (await storage.getUser(userId)) || { name: 'Ciudadano LeFriApp', language: 'es' };
+    const contacts = await storage.getEmergencyContacts(userId);
+
+    let voiceTranscription = "";
+    if (file) {
+      try {
+        voiceTranscription = await transcriptionService.transcribeAudioBuffer(file.buffer, 'emergency_voice.webm');
+      } catch (sttErr: any) {
+        console.warn("[CitizenRouter] STT error during emergency voice processing:", sttErr.message);
+      }
+    }
+
+    const emergencyDetails = voiceTranscription 
+      ? `Mensaje de voz transcrito por MediaSuite STT: "${voiceTranscription}"`
+      : "Alerta activada con nota de voz.";
+
+    const emergencyMessage = await geminiService.generateEmergencyMessage({
+      userName: user.name,
+      location: { 
+        latitude: latitude ? parseFloat(latitude) : undefined, 
+        longitude: longitude ? parseFloat(longitude) : undefined, 
+        address 
+      },
+      language: user.language
+    });
+
+    const fullMessage = `${emergencyMessage.text}\n\n📢 ${emergencyDetails}`;
+
+    const whatsappContacts = contacts.filter(contact => contact.whatsappEnabled);
+    const whatsappResults = await whatsAppService.sendEmergencyAlert({
+      contacts: whatsappContacts.map(c => ({ phone: c.phone, name: c.name })),
+      message: fullMessage,
+      location: { latitude: latitude ? parseFloat(latitude) : 0, longitude: longitude ? parseFloat(longitude) : 0 }
+    });
+
+    const emailResults = [];
+    for (const contact of contacts) {
+      if (contact.phone.includes('@')) {
+        const emailResult = await emailService.sendEmergencyEmail({
+          to: contact.phone,
+          userName: user.name,
+          message: fullMessage,
+          location: { latitude: latitude ? parseFloat(latitude) : undefined, longitude: longitude ? parseFloat(longitude) : undefined, address }
+        });
+        emailResults.push({ phone: contact.phone, name: contact.name, success: emailResult.success, error: emailResult.error });
+      }
+    }
+
+    const allResults = [...whatsappResults, ...emailResults];
+    const contactsNotified = allResults.map(result => ({
+      id: Date.now() + Math.random(),
+      name: result.name,
+      phone: result.phone,
+      status: result.success ? "sent" : "failed",
+      sentAt: new Date().toISOString(),
+      error: result.error
+    }));
+
+    await storage.createEmergencyAlert({
+      userId,
+      latitude: latitude?.toString(),
+      longitude: longitude?.toString(),
+      address,
+      contactsNotified,
+      status: contactsNotified.some(c => c.status === "sent") ? "sent" : "failed"
+    });
+
+    res.json({
+      status: contactsNotified.some(c => c.status === "sent") ? "sent" : "failed",
+      contactsNotified,
+      transcription: voiceTranscription,
+      message: fullMessage
+    });
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /emergency/with-voice:", error);
+    res.status(500).json({ error: error.message || "Failed to dispatch emergency with voice" });
   }
 });
 

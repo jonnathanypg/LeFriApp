@@ -8,7 +8,8 @@ import { useTranslations } from '@/lib/i18n';
 
 interface VoiceRecorderProps {
   onRecordingComplete?: (audioBlob: Blob) => void;
-  onUploadSuccess?: (result: { id: string; url: string; filename: string }) => void;
+  onUploadSuccess?: (result: { id: string; url: string; filename: string; text?: string; transcription?: string }) => void;
+  onTranscriptionComplete?: (text: string) => void;
   title?: string;
   maxDuration?: number; // in seconds
   autoUpload?: boolean;
@@ -18,6 +19,7 @@ interface VoiceRecorderProps {
 export function VoiceRecorder({ 
   onRecordingComplete, 
   onUploadSuccess,
+  onTranscriptionComplete,
   title,
   maxDuration = 60,
   autoUpload = false,
@@ -177,13 +179,12 @@ export function VoiceRecorder({
     try {
       const formData = new FormData();
       formData.append('audio', blobToUpload, 'voice_note.webm');
-      formData.append('type', 'emergency');
+      formData.append('file', blobToUpload, 'voice_note.webm');
+      formData.append('type', 'consultation');
 
       const response = await fetch('/api/voice/upload', {
         method: 'POST',
-        headers: {
-          'x-user-id': '66a1b2c3d4e5f6789abc1234',
-        },
+        credentials: 'include',
         body: formData,
       });
 
@@ -193,7 +194,10 @@ export function VoiceRecorder({
 
       const result = await response.json();
       onUploadSuccess?.(result);
-    } catch (error) {
+      if (result.text || result.transcription) {
+        onTranscriptionComplete?.(result.text || result.transcription);
+      }
+    } catch (error: any) {
       console.error('Upload error:', error);
       setError('Error al subir la grabación. Intenta nuevamente.');
     } finally {

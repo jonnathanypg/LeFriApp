@@ -326,12 +326,22 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
                 onRecordingComplete={(blob) => {
                   const formData = new FormData();
                   formData.append('file', blob, 'intake_voice.webm');
+                  formData.append('audio', blob, 'intake_voice.webm');
                   fetch('/api/citizen/transcribe', { method: 'POST', body: formData })
                     .then(r => r.json())
                     .then(data => {
                       if (data.text) handleVoiceTranscription(data.text);
                     })
-                    .catch(err => console.error('Transcription error:', err));
+                    .catch(() => {
+                      fetch('/api/voice/upload', { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(data => {
+                          if (data.text || data.transcription) {
+                            handleVoiceTranscription(data.text || data.transcription);
+                          }
+                        })
+                        .catch(err => console.error('Transcription error:', err));
+                    });
                 }} 
               />
             </div>

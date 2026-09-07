@@ -61,6 +61,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     req.url = "/consultations" + (req.url === "/" ? "" : req.url);
     citizenRouter(req, res, next);
   });
+  // Mount /api/voice/upload and /api/voice/:id
+  app.use("/api/voice", (req, res, next) => {
+    req.url = "/voice" + (req.url === "/" ? "" : req.url);
+    citizenRouter(req, res, next);
+  });
+  // Mount /api/emergency and /api/emergency/with-voice
+  app.use("/api/emergency", (req, res, next) => {
+    req.url = "/emergency" + (req.url === "/" ? "" : req.url);
+    citizenRouter(req, res, next);
+  });
   app.use("/api/lawyer", lawfirmRouter);
   app.use("/api/lawfirm", lawfirmRouter); // Ensure lawfirm is also mapped if needed
   app.use("/api/billing", billingRouter);

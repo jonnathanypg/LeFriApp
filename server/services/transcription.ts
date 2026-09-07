@@ -5,43 +5,82 @@ export class TranscriptionService {
   private mediaSuiteApiUrl: string;
   private mediaSuiteToken: string;
 
+  private mediaMicroUrl: string;
+
   constructor() {
-    this.mediaSuiteApiUrl = process.env.MEDIASUITE_STT_URL || process.env.WHISPER_API_URL || 'https://media.weblifetech.com/api/external/transcribe';
-    this.mediaSuiteToken = process.env.MEDIASUITE_API_TOKEN || process.env.WHISPER_API_KEY || 'wlt_sec_default_token';
+    this.mediaMicroUrl = process.env.MEDIA_MICRO_STT_URL || 'https://media.weblifetech.com/api/micro/audio/transcribe';
+    this.mediaSuiteApiUrl = process.env.MEDIA_STT_URL || process.env.MEDIASUITE_STT_URL || process.env.WHISPER_API_URL || 'https://media.weblifetech.com/api/external/transcribe';
+    this.mediaSuiteToken = process.env.EXTERNAL_API_KEY || process.env.MEDIASUITE_API_TOKEN || process.env.WHISPER_API_KEY || 'wlt_sec_9fec604794cc3059ae0cadc1a9b14f166eebc5c4220f45ae';
   }
 
-  async transcribeAudioBuffer(audioBuffer: Buffer, filename: string = 'audio.mp3'): Promise<string> {
-    // 1. Try MediaSuite Primary API (media.weblifetech.com)
+  async transcribeAudioBuffer(audioBuffer: Buffer, filename: string = 'audio.webm'): Promise<string> {
+    const token = this.mediaSuiteToken?.trim().replace(/^['"]|['"]$/g, '');
+
+    const ext = filename.split('.').pop()?.toLowerCase() || 'webm';
+    const mimeMap: Record<string, string> = {
+      'webm': 'audio/webm',
+      'mp3': 'audio/mpeg',
+      'wav': 'audio/wav',
+      'ogg': 'audio/ogg',
+      'm4a': 'audio/mp4',
+      'mp4': 'audio/mp4'
+    };
+    const contentType = mimeMap[ext] || 'audio/webm';
+
+    // Step 0: Remote media.weblifetech.com Microservice (Priority 1 - exactly as Aikrofy)
     try {
-      console.log(`[TranscriptionService] Sending STT request to MediaSuite API: ${this.mediaSuiteApiUrl}`);
+      console.log(`[TranscriptionService] Trying MediaSuite Micro STT: ${this.mediaMicroUrl}`);
       const form = new FormData();
-      form.append('file', audioBuffer, filename);
+      form.append('file', audioBuffer, { filename, contentType });
 
       const headers: Record<string, string> = {
         ...form.getHeaders()
       };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['X-API-Key'] = token;
+      }
 
-      if (this.mediaSuiteToken) {
-        if (this.mediaSuiteToken.startsWith('wlt_sec_')) {
-          headers['Authorization'] = `Bearer ${this.mediaSuiteToken}`;
-        } else {
-          headers['x-api-key'] = this.mediaSuiteToken;
-          headers['Authorization'] = `Bearer ${this.mediaSuiteToken}`;
-        }
+      const response = await axios.post(this.mediaMicroUrl, form, {
+        headers,
+        timeout: 25000
+      });
+
+      const text = response.data?.text || response.data?.transcription || '';
+      if (text && text.trim()) {
+        console.log(`[TranscriptionService] MediaSuite Micro STT successful. Length: ${text.length}`);
+        return text.trim();
+      }
+    } catch (error: any) {
+      console.warn('[TranscriptionService] MediaSuite Micro STT failed:', error?.message || error);
+    }
+
+    // Step 0.5: Remote media.weblifetech.com External STT API (Priority 2 - exactly as Aikrofy)
+    try {
+      console.log(`[TranscriptionService] Trying MediaSuite External STT: ${this.mediaSuiteApiUrl}`);
+      const form = new FormData();
+      form.append('file', audioBuffer, { filename, contentType });
+
+      const headers: Record<string, string> = {
+        ...form.getHeaders()
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['X-API-Key'] = token;
       }
 
       const response = await axios.post(this.mediaSuiteApiUrl, form, { 
         headers,
-        timeout: 30000 
+        timeout: 25000 
       });
 
-      const text = response.data.text || response.data.transcription || '';
-      if (text) {
-        console.log(`[TranscriptionService] MediaSuite STT successful. Length: ${text.length}`);
+      const text = response.data?.text || response.data?.transcription || '';
+      if (text && text.trim()) {
+        console.log(`[TranscriptionService] MediaSuite External STT successful. Length: ${text.length}`);
         return text.trim();
       }
     } catch (error: any) {
-      console.warn('[TranscriptionService] Primary MediaSuite STT API failed:', error?.message || error);
+      console.warn('[TranscriptionService] MediaSuite External STT API failed:', error?.message || error);
     }
 
     // 2. Fallback to Groq Whisper if available

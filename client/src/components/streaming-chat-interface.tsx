@@ -344,12 +344,23 @@ export function StreamingChatInterface({ country }: StreamingChatInterfaceProps)
                 onRecordingComplete={(blob) => {
                   const formData = new FormData();
                   formData.append('file', blob, 'chat_voice.webm');
+                  formData.append('audio', blob, 'chat_voice.webm');
                   fetch('/api/citizen/transcribe', { method: 'POST', body: formData })
                     .then(r => r.json())
                     .then(data => {
                       if (data.text) handleVoiceTranscription(data.text);
                     })
-                    .catch(err => console.error('Voice transcription error:', err));
+                    .catch(() => {
+                      // Fallback to /api/voice/upload
+                      fetch('/api/voice/upload', { method: 'POST', body: formData })
+                        .then(r => r.json())
+                        .then(data => {
+                          if (data.text || data.transcription) {
+                            handleVoiceTranscription(data.text || data.transcription);
+                          }
+                        })
+                        .catch(err => console.error('Voice transcription error:', err));
+                    });
                 }}
               />
               <span className="hidden sm:inline text-[11px] text-slate-500">
