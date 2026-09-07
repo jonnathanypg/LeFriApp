@@ -11,9 +11,11 @@ import { VoiceRecorder } from '@/components/voice-recorder';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { 
   FileText, Sparkles, Download, ExternalLink, Copy, Check, 
-  Briefcase, AlertCircle, ShieldAlert, Users, MessageSquare, Mic, ArrowRight
+  Briefcase, AlertCircle, ShieldAlert, Users, MessageSquare, Mic, ArrowRight, FileDown
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
@@ -49,6 +51,16 @@ export default function DocumentosPage() {
   const [generatedDoc, setGeneratedDoc] = useState<any>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
+
+  // Helper to strip markdown code block wrapping if LLM formatted it as ```markdown ... ```
+  const getCleanDocumentContent = (rawContent?: string) => {
+    if (!rawContent) return '';
+    return rawContent
+      .replace(/^```[a-zA-Z]*\n/gm, '')
+      .replace(/^```$/gm, '')
+      .trim();
+  };
 
   const generateMutation = useMutation({
     mutationFn: async () => {
@@ -96,29 +108,74 @@ export default function DocumentosPage() {
 
   const handleCopy = () => {
     if (!generatedDoc?.documentContent) return;
-    navigator.clipboard.writeText(generatedDoc.documentContent);
+    const cleanText = getCleanDocumentContent(generatedDoc.documentContent);
+    navigator.clipboard.writeText(cleanText);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
-    toast({ title: t.docCopied || "Copiado", description: t.explanationCopied || "Borrador legal copiado al portapapeles." });
+    toast({ title: t.docCopied || "Copiado", description: t.explanationCopied || "Borrador legal copiado al portapapeles listo para pegar." });
   };
 
-  const handleExportGoogleDocs = () => {
+  const handleExportGoogleDocs = async () => {
     if (!generatedDoc?.documentContent) return;
-    const encoded = encodeURIComponent(generatedDoc.documentContent);
-    const googleDocsUrl = `https://docs.google.com/document/create?title=${encodeURIComponent(generatedDoc.title || 'Documento Legal')}&body=${encoded}`;
+    const cleanText = getCleanDocumentContent(generatedDoc.documentContent);
+    try {
+      await navigator.clipboard.writeText(cleanText);
+      toast({
+        title: "¡Texto legal copiado!",
+        description: "Se abrió Google Docs y el borrador está en tu portapapeles. Solo presiona Ctrl+V (o Pegar).",
+      });
+    } catch {
+      // ignore clipboard failure
+    }
+    const googleDocsUrl = `https://docs.google.com/document/create?title=${encodeURIComponent(generatedDoc.title || 'Documento Legal')}`;
     window.open(googleDocsUrl, '_blank');
+  };
+
+  const handleExportDocx = async () => {
+    if (!generatedDoc?.documentContent) return;
+    setIsExportingDocx(true);
+    try {
+      const cleanContent = getCleanDocumentContent(generatedDoc.documentContent);
+      const response = await fetch('/api/citizen/documents/export-docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: generatedDoc.title || 'Documento Legal',
+          content: cleanContent
+        })
+      });
+
+      if (!response.ok) throw new Error('Fallo al exportar documento Word');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${generatedDoc.title || 'Documento_Legal'}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+
+      toast({ title: t.success || "Descargado", description: "Documento Word (.docx) generado exitosamente." });
+    } catch (err: any) {
+      toast({ title: t.error || "Error", description: err.message || "No se pudo generar el archivo Word.", variant: "destructive" });
+    } finally {
+      setIsExportingDocx(false);
+    }
   };
 
   const handleExportPdf = async () => {
     if (!generatedDoc?.documentContent) return;
     setIsExportingPdf(true);
     try {
+      const cleanContent = getCleanDocumentContent(generatedDoc.documentContent);
       const response = await fetch('/api/citizen/documents/export-pdf', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: generatedDoc.title,
-          content: generatedDoc.documentContent
+          title: generatedDoc.title || 'Documento Legal',
+          content: cleanContent
         })
       });
 
@@ -353,14 +410,26 @@ export default function DocumentosPage() {
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono text-slate-200 max-h-[480px] overflow-y-auto whitespace-pre-wrap leading-relaxed shadow-inner">
-                        {generatedDoc.documentContent}
+                      <div className="p-6 bg-slate-950 rounded-xl border border-slate-800 text-sm text-slate-200 max-h-[520px] overflow-y-auto leading-relaxed shadow-inner prose prose-invert prose-slate max-w-none prose-headings:text-slate-100 prose-headings:font-bold prose-h1:text-lg prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-ul:my-2 prose-li:my-0.5 prose-hr:border-slate-800">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {getCleanDocumentContent(generatedDoc.documentContent)}
+                        </ReactMarkdown>
                       </div>
 
                       {/* Export Hub Buttons */}
                       <div className="p-3 bg-slate-950/60 border border-slate-800 rounded-xl flex flex-wrap items-center justify-between gap-2">
                         <span className="text-xs text-slate-400">{t.exportDocument || "Exportar documento:"}</span>
-                        <div className="flex items-center space-x-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <Button
+                            size="sm"
+                            onClick={handleExportDocx}
+                            disabled={isExportingDocx}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs rounded-lg flex items-center space-x-1.5"
+                          >
+                            <FileDown className="w-3.5 h-3.5" />
+                            <span>{isExportingDocx ? (t.exportingDocx || 'Generando Word...') : (t.downloadDocx || 'Descargar Word (.docx)')}</span>
+                          </Button>
+
                           <Button
                             size="sm"
                             onClick={handleExportPdf}

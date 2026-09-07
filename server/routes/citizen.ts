@@ -20,6 +20,7 @@ import { insertEmergencyContactSchema } from "@shared/schema";
 import multer from 'multer';
 import puppeteer from 'puppeteer';
 import crypto from 'crypto';
+import { Document as DocxDocument, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 
 export const citizenRouter = Router();
 
@@ -546,6 +547,12 @@ citizenRouter.post("/documents/export-pdf", async (req: any, res) => {
     const { title = "Documento Legal", content } = req.body;
     if (!content) return res.status(400).json({ error: "content is required" });
 
+    // Clean markdown codeblocks if present
+    const cleanedContent = content
+      .replace(/^```[a-zA-Z]*\n/gm, '')
+      .replace(/^```$/gm, '')
+      .trim();
+
     // HTML template for PDF conversion
     const html = `<!DOCTYPE html>
 <html>
@@ -555,13 +562,15 @@ citizenRouter.post("/documents/export-pdf", async (req: any, res) => {
   <style>
     body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.6; margin: 40px; color: #111; }
     h1 { font-size: 16pt; text-align: center; margin-bottom: 20px; }
+    h2 { font-size: 14pt; margin-top: 20px; margin-bottom: 10px; }
+    h3 { font-size: 12pt; margin-top: 15px; margin-bottom: 8px; }
     p { margin-bottom: 12px; text-align: justify; }
     .footer { margin-top: 40px; font-size: 10pt; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
   </style>
 </head>
 <body>
   <h1>${title}</h1>
-  <div>${content.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</div>
+  <div>${cleanedContent.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br/>')}</div>
   <div class="footer">Generado automáticamente por LeFriApp - Asistencia Legal Inteligente</div>
 </body>
 </html>`;
@@ -595,6 +604,135 @@ citizenRouter.post("/documents/export-pdf", async (req: any, res) => {
     res.status(500).json({ error: "Failed to export PDF" });
   }
 });
+
+/**
+ * Export Document to Microsoft Word (.docx)
+ */
+citizenRouter.post("/documents/export-docx", async (req: any, res) => {
+  try {
+    const { title = "Documento Legal", content } = req.body;
+    if (!content) return res.status(400).json({ error: "content is required" });
+
+    // Clean backticks or code markdown if present
+    const cleanedContent = content
+      .replace(/^```[a-zA-Z]*\n/gm, '')
+      .replace(/^```$/gm, '')
+      .trim();
+
+    const paragraphs: Paragraph[] = [];
+
+    // Document Title Heading
+    paragraphs.push(
+      new Paragraph({
+        text: title.toUpperCase(),
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+        spacing: { after: 300, before: 100 }
+      })
+    );
+
+    // Parse lines into styled Word paragraphs
+    const lines = cleanedContent.split('\n');
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) {
+        paragraphs.push(new Paragraph({ text: "", spacing: { after: 120 } }));
+        continue;
+      }
+
+      if (line.startsWith('# ')) {
+        paragraphs.push(new Paragraph({
+          text: line.replace('# ', ''),
+          heading: HeadingLevel.HEADING_1,
+          spacing: { before: 200, after: 120 }
+        }));
+      } else if (line.startsWith('## ')) {
+        paragraphs.push(new Paragraph({
+          text: line.replace('## ', ''),
+          heading: HeadingLevel.HEADING_2,
+          spacing: { before: 180, after: 100 }
+        }));
+      } else if (line.startsWith('### ')) {
+        paragraphs.push(new Paragraph({
+          text: line.replace('### ', ''),
+          heading: HeadingLevel.HEADING_3,
+          spacing: { before: 140, after: 80 }
+        }));
+      } else if (line === '---' || line === '***') {
+        paragraphs.push(new Paragraph({
+          text: "____________________________________________________________",
+          alignment: AlignmentType.CENTER,
+          spacing: { before: 100, after: 100 }
+        }));
+      } else {
+        // Normal paragraph with basic bold handling (**bold**)
+        const parts = line.split(/(\*\*.*?\*\*)/g);
+        const runs = parts.map(part => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return new TextRun({
+              text: part.slice(2, -2),
+              bold: true,
+              font: 'Times New Roman',
+              size: 24 // 12pt
+            });
+          }
+          return new TextRun({
+            text: part,
+            font: 'Times New Roman',
+            size: 24 // 12pt
+          });
+        });
+
+        paragraphs.push(new Paragraph({
+          children: runs,
+          spacing: { after: 120 },
+          alignment: AlignmentType.JUSTIFIED
+        }));
+      }
+    }
+
+    // Add legal footer note
+    paragraphs.push(new Paragraph({
+      children: [
+        new TextRun({
+          text: "Generado formalmente por LeFriApp - Asistencia Legal Inteligente",
+          italics: true,
+          font: 'Times New Roman',
+          size: 18,
+          color: "777777"
+        })
+      ],
+      spacing: { before: 400 },
+      alignment: AlignmentType.CENTER
+    }));
+
+    const doc = new DocxDocument({
+      sections: [{
+        properties: {
+          page: {
+            margin: {
+              top: 1440, // 1 inch = 1440 twips (approx 2.54cm)
+              right: 1440,
+              bottom: 1440,
+              left: 1440
+            }
+          }
+        },
+        children: paragraphs
+      }]
+    });
+
+    const buffer = await Packer.toBuffer(doc);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(title)}.docx"`);
+    return res.send(buffer);
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /documents/export-docx:", error);
+    res.status(500).json({ error: "Failed to export DOCX" });
+  }
+});
+
 
 /**
  * Public system settings endpoint for frontend feature discovery
