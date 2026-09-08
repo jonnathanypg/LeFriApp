@@ -53,7 +53,6 @@ export default function DocumentosPage() {
   const [customDetails, setCustomDetails] = useState('');
   const [generatedDoc, setGeneratedDoc] = useState<any>(null);
   const [isCopied, setIsCopied] = useState(false);
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [isExportingGoogleDocs, setIsExportingGoogleDocs] = useState(false);
   const [showGoogleConnectModal, setShowGoogleConnectModal] = useState(false);
@@ -77,6 +76,31 @@ export default function DocumentosPage() {
       .replace(/^```[a-zA-Z]*\n/gm, '')
       .replace(/^```$/gm, '')
       .trim();
+  };
+
+  const stripMarkdownForClipboard = (text: string) => {
+    return text
+      .replace(/^```[a-zA-Z]*\n/gm, '')
+      .replace(/^```$/gm, '')
+      .replace(/^#+\s+/gm, '')
+      .replace(/\*\*(.*?)\*\*/g, '$1')
+      .replace(/\*(.*?)\*/g, '$1')
+      .trim();
+  };
+
+  const markdownToHtmlForClipboard = (text: string) => {
+    return text
+      .replace(/^```[a-zA-Z]*\n/gm, '')
+      .replace(/^```$/gm, '')
+      .replace(/^#\s+(.*)$/gm, '<h1 style="font-size:16pt; font-weight:bold; text-align:center; margin-bottom:12pt;">$1</h1>')
+      .replace(/^##\s+(.*)$/gm, '<h2 style="font-size:13pt; font-weight:bold; margin-top:14pt; margin-bottom:6pt;">$1</h2>')
+      .replace(/^###\s+(.*)$/gm, '<h3 style="font-size:12pt; font-weight:bold; margin-top:10pt; margin-bottom:4pt;">$1</h3>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/^[-*•]\s+(.*)$/gm, '<li>$1</li>')
+      .replace(/^(\d+)\.\s+(.*)$/gm, '<p style="margin-bottom:6pt;"><strong>$1.</strong> $2</p>')
+      .replace(/^---\s*$/gm, '<hr style="border:none; border-top:1px solid #ccc; margin:16pt 0;"/>')
+      .replace(/\n\n/g, '<br/><br/>');
   };
 
   const generateMutation = useMutation({
@@ -124,13 +148,29 @@ export default function DocumentosPage() {
     });
   };
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!generatedDoc?.documentContent) return;
     const cleanText = getCleanDocumentContent(generatedDoc.documentContent);
-    navigator.clipboard.writeText(cleanText);
+    const plainText = stripMarkdownForClipboard(cleanText);
+    const htmlText = markdownToHtmlForClipboard(cleanText);
+
+    try {
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        const item = new ClipboardItem({
+          'text/html': new Blob([htmlText], { type: 'text/html' }),
+          'text/plain': new Blob([plainText], { type: 'text/plain' })
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard.writeText(plainText);
+      }
+    } catch {
+      await navigator.clipboard.writeText(plainText);
+    }
+
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
-    toast({ title: t.docCopied || "Copiado", description: t.explanationCopied || "Borrador legal copiado al portapapeles listo para pegar." });
+    toast({ title: t.docCopied || "Copiado", description: "Borrador legal copiado con formato limpio listo para pegar." });
   };
 
   const handleExportGoogleDocs = async () => {
@@ -164,7 +204,7 @@ export default function DocumentosPage() {
       window.open(data.url, '_blank');
       toast({
         title: "¡Documento creado en Google Docs!",
-        description: "El documento se abrió en una nueva pestaña con todo su contenido listo para editar o imprimir.",
+        description: "El documento se abrió en una nueva pestaña con todo su contenido y encabezados listos.",
       });
     } catch (err: any) {
       console.error('Google Docs export error:', err);
@@ -181,15 +221,29 @@ export default function DocumentosPage() {
   const handleManualGoogleDocsFallback = async () => {
     if (!generatedDoc?.documentContent) return;
     const cleanText = getCleanDocumentContent(generatedDoc.documentContent);
+    const plainText = stripMarkdownForClipboard(cleanText);
+    const htmlText = markdownToHtmlForClipboard(cleanText);
+
     try {
-      await navigator.clipboard.writeText(cleanText);
-    } catch (e) {}
+      if (typeof ClipboardItem !== 'undefined' && navigator.clipboard?.write) {
+        const item = new ClipboardItem({
+          'text/html': new Blob([htmlText], { type: 'text/html' }),
+          'text/plain': new Blob([plainText], { type: 'text/plain' })
+        });
+        await navigator.clipboard.write([item]);
+      } else {
+        await navigator.clipboard.writeText(plainText);
+      }
+    } catch {
+      await navigator.clipboard.writeText(plainText);
+    }
+
     setShowGoogleConnectModal(false);
     const googleDocsUrl = `https://docs.google.com/document/create?title=${encodeURIComponent(generatedDoc.title || 'Documento Legal')}`;
     window.open(googleDocsUrl, '_blank');
     toast({
-      title: "Borrador en portapapeles",
-      description: "Se abrió Google Docs. Presiona Ctrl + V para pegar el contenido en tu nuevo documento.",
+      title: "Borrador con formato copiado",
+      description: "Se abrió Google Docs. Solo presiona Ctrl + V para pegar el escrito con sus encabezados y negritas.",
     });
   };
 
@@ -219,45 +273,11 @@ export default function DocumentosPage() {
       a.remove();
       window.URL.revokeObjectURL(url);
 
-      toast({ title: t.success || "Descargado", description: "Documento Word (.docx) generado exitosamente." });
+      toast({ title: t.success || "Descargado", description: "Documento Word (.docx) generado exitosamente con formato jurídico oficial." });
     } catch (err: any) {
       toast({ title: t.error || "Error", description: err.message || "No se pudo generar el archivo Word.", variant: "destructive" });
     } finally {
       setIsExportingDocx(false);
-    }
-  };
-
-  const handleExportPdf = async () => {
-    if (!generatedDoc?.documentContent) return;
-    setIsExportingPdf(true);
-    try {
-      const cleanContent = getCleanDocumentContent(generatedDoc.documentContent);
-      const response = await fetch('/api/citizen/documents/export-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: generatedDoc.title || 'Documento Legal',
-          content: cleanContent
-        })
-      });
-
-      if (!response.ok) throw new Error('Fallo al exportar PDF');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${generatedDoc.title || 'documento'}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(url);
-
-      toast({ title: t.success || "Descargado", description: "Documento PDF generado exitosamente." });
-    } catch (err: any) {
-      toast({ title: t.error || "Error", description: "No se pudo generar el PDF.", variant: "destructive" });
-    } finally {
-      setIsExportingPdf(false);
     }
   };
 
@@ -359,7 +379,7 @@ export default function DocumentosPage() {
           </div>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <p className="text-xs sm:text-sm text-slate-400">
-              {t.documentsSubtitle || "Redacta en segundos cartas, oficios formales, peticiones y minutas legales con fundamentos normativos listos para exportar a PDF y Google Docs."}
+              {t.documentsSubtitle || "Redacta en segundos cartas, oficios formales, peticiones y minutas legales con fundamentos normativos listos para exportar a Word (.docx) y Google Docs."}
             </p>
             {generatedDoc && (
               <Button
@@ -674,16 +694,6 @@ export default function DocumentosPage() {
                           >
                             <FileDown className="w-3.5 h-3.5" />
                             <span>{isExportingDocx ? (t.exportingDocx || 'Generando Word...') : (t.downloadDocx || 'Descargar Word (.docx)')}</span>
-                          </Button>
-
-                          <Button
-                            size="sm"
-                            onClick={handleExportPdf}
-                            disabled={isExportingPdf}
-                            className="bg-red-600 hover:bg-red-500 text-white text-xs rounded-lg flex items-center space-x-1.5"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>{isExportingPdf ? (t.exportingPdf || 'Exportando...') : (t.downloadPdf || 'Descargar PDF')}</span>
                           </Button>
 
                           <Button

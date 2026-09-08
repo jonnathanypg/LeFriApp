@@ -22,6 +22,7 @@ import puppeteer from 'puppeteer';
 import crypto from 'crypto';
 import { Document as DocxDocument, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import { googleAuthService } from "../services/google-auth";
+import { markdownToDocxParagraphs } from "../services/document-formatter";
 
 export const citizenRouter = Router();
 
@@ -776,98 +777,7 @@ citizenRouter.post("/documents/export-docx", async (req: any, res) => {
     const { title = "Documento Legal", content } = req.body;
     if (!content) return res.status(400).json({ error: "content is required" });
 
-    // Clean backticks or code markdown if present
-    const cleanedContent = content
-      .replace(/^```[a-zA-Z]*\n/gm, '')
-      .replace(/^```$/gm, '')
-      .trim();
-
-    const paragraphs: Paragraph[] = [];
-
-    // Document Title Heading
-    paragraphs.push(
-      new Paragraph({
-        text: title.toUpperCase(),
-        heading: HeadingLevel.TITLE,
-        alignment: AlignmentType.CENTER,
-        spacing: { after: 300, before: 100 }
-      })
-    );
-
-    // Parse lines into styled Word paragraphs
-    const lines = cleanedContent.split('\n');
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
-      if (!line) {
-        paragraphs.push(new Paragraph({ text: "", spacing: { after: 120 } }));
-        continue;
-      }
-
-      if (line.startsWith('# ')) {
-        paragraphs.push(new Paragraph({
-          text: line.replace('# ', ''),
-          heading: HeadingLevel.HEADING_1,
-          spacing: { before: 200, after: 120 }
-        }));
-      } else if (line.startsWith('## ')) {
-        paragraphs.push(new Paragraph({
-          text: line.replace('## ', ''),
-          heading: HeadingLevel.HEADING_2,
-          spacing: { before: 180, after: 100 }
-        }));
-      } else if (line.startsWith('### ')) {
-        paragraphs.push(new Paragraph({
-          text: line.replace('### ', ''),
-          heading: HeadingLevel.HEADING_3,
-          spacing: { before: 140, after: 80 }
-        }));
-      } else if (line === '---' || line === '***') {
-        paragraphs.push(new Paragraph({
-          text: "____________________________________________________________",
-          alignment: AlignmentType.CENTER,
-          spacing: { before: 100, after: 100 }
-        }));
-      } else {
-        // Normal paragraph with basic bold handling (**bold**)
-        const parts = line.split(/(\*\*.*?\*\*)/g);
-        const runs = parts.map((part: string) => {
-          if (part.startsWith('**') && part.endsWith('**')) {
-            return new TextRun({
-              text: part.slice(2, -2),
-              bold: true,
-              font: 'Times New Roman',
-              size: 24 // 12pt
-            });
-          }
-          return new TextRun({
-            text: part,
-            font: 'Times New Roman',
-            size: 24 // 12pt
-          });
-        });
-
-        paragraphs.push(new Paragraph({
-          children: runs,
-          spacing: { after: 120 },
-          alignment: AlignmentType.JUSTIFIED
-        }));
-      }
-    }
-
-    // Add legal footer note
-    paragraphs.push(new Paragraph({
-      children: [
-        new TextRun({
-          text: "Generado formalmente por LeFriApp - Asistencia Legal Inteligente",
-          italics: true,
-          font: 'Times New Roman',
-          size: 18,
-          color: "777777"
-        })
-      ],
-      spacing: { before: 400 },
-      alignment: AlignmentType.CENTER
-    }));
+    const paragraphs = markdownToDocxParagraphs(title, content);
 
     const doc = new DocxDocument({
       sections: [{

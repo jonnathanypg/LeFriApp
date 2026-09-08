@@ -160,7 +160,7 @@ export class GoogleAuthService {
   }
 
   /**
-   * Creates a native Google Document inside the user's Google Drive and populates it with the text content.
+   * Creates a native Google Document inside the user's Google Drive with full rich legal formatting (Headings, Bold, Lists, Indents)
    */
   async createGoogleDoc(tokens: any, title: string, content: string): Promise<{ documentId: string; url: string }> {
     if (!this.oauth2Client) {
@@ -172,12 +172,47 @@ export class GoogleAuthService {
       Object.assign(tokens, newTokens);
     });
 
-    const docs = google.docs({ version: 'v1', auth: authClient });
+    const docTitle = title || 'Documento Legal - LeFriApp';
 
-    // 1. Create blank document with the legal title
+    // 1. Primary Strategy: Import through Google Drive as HTML
+    // This allows Google Drive to convert the document into a 100% native Google Doc with:
+    // - Real Heading 1, 2, 3
+    // - Real bold/italics
+    // - Real bulleted and numbered lists
+    // - No raw markdown characters (#, **, ---)
+    try {
+      const drive = google.drive({ version: 'v3', auth: authClient });
+      const { Readable } = await import('stream');
+      const { markdownToLegalHtml } = await import('./document-formatter');
+      const htmlContent = markdownToLegalHtml(docTitle, content);
+
+      const fileRes = await drive.files.create({
+        requestBody: {
+          name: docTitle,
+          mimeType: 'application/vnd.google-apps.document'
+        },
+        media: {
+          mimeType: 'text/html',
+          body: Readable.from([htmlContent])
+        },
+        fields: 'id'
+      });
+
+      if (fileRes.data.id) {
+        return {
+          documentId: fileRes.data.id,
+          url: `https://docs.google.com/document/d/${fileRes.data.id}/edit`
+        };
+      }
+    } catch (driveErr) {
+      console.warn('[GoogleAuthService] Drive HTML import failed, attempting Docs API fallback:', driveErr);
+    }
+
+    // 2. Secondary Fallback: Docs API with clean stripped text (no raw markdown hashes/asterisks)
+    const docs = google.docs({ version: 'v1', auth: authClient });
     const createRes = await docs.documents.create({
       requestBody: {
-        title: title || 'Documento Legal - LeFriApp'
+        title: docTitle
       }
     });
 
@@ -186,8 +221,8 @@ export class GoogleAuthService {
       throw new Error('Google Docs no devolvió un identificador de documento.');
     }
 
-    // 2. Insert formatted legal text into the document
-    const cleanContent = (content || '').trim();
+    const { stripMarkdownToPlainText } = await import('./document-formatter');
+    const cleanContent = stripMarkdownToPlainText(content);
     if (cleanContent.length > 0) {
       await docs.documents.batchUpdate({
         documentId,
@@ -195,9 +230,7 @@ export class GoogleAuthService {
           requests: [
             {
               insertText: {
-                location: {
-                  index: 1
-                },
+                location: { index: 1 },
                 text: cleanContent
               }
             }
