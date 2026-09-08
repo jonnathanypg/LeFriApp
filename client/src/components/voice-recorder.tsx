@@ -35,7 +35,7 @@ export function VoiceRecorder({
   const [error, setError] = useState<string | null>(null);
   const { language } = useLanguage();
   const t = useTranslations(language);
-  const vr = t.voiceRecorder || {};
+  const vr = (t as any).voiceRecorder || {};
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);

@@ -19,6 +19,7 @@ export interface GoogleUserInfo {
 
 export class GoogleAuthService {
   private oauth2Client: any = null;
+  private userTokensMap = new Map<string, any>();
 
   constructor() {
     this.initializeOAuth();
@@ -46,51 +47,169 @@ export class GoogleAuthService {
     }
   }
 
+  createClientForTokens(tokens: any) {
+    const clientId = process.env.GOOGLE_OAUTH_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_OAUTH_CLIENT_SECRET;
+    const redirectUri = process.env.GOOGLE_OAUTH_REDIRECT_URI;
+    const client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);
+    client.setCredentials(tokens);
+    return client;
+  }
 
-  getAuthUrl(): string {
+  getAuthUrl(options?: { state?: string; includeDrive?: boolean }): string {
     if (!this.oauth2Client) {
       throw new Error('Google OAuth not configured');
     }
 
     const scopes = [
       'https://www.googleapis.com/auth/userinfo.profile',
-      'https://www.googleapis.com/auth/userinfo.email'
+      'https://www.googleapis.com/auth/userinfo.email',
     ];
+
+    if (options?.includeDrive !== false) {
+      scopes.push('https://www.googleapis.com/auth/drive.file');
+    }
 
     return this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
-      include_granted_scopes: true
+      prompt: 'consent',
+      include_granted_scopes: true,
+      state: options?.state
     });
   }
 
-  async getUserInfo(code: string): Promise<GoogleUserInfo> {
+  getDriveAuthUrl(options?: { returnTo?: string; state?: any }): string {
+    if (!this.oauth2Client) {
+      throw new Error('Google OAuth not configured');
+    }
+
+    const statePayload = JSON.stringify({
+      action: 'drive_export',
+      returnTo: options?.returnTo || '/documentos?google_connected=true',
+      ...(options?.state || {})
+    });
+    const encodedState = Buffer.from(statePayload).toString('base64');
+
+    return this.oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+        'https://www.googleapis.com/auth/drive.file'
+      ],
+      prompt: 'consent',
+      include_granted_scopes: true,
+      state: encodedState
+    });
+  }
+
+  async getUserInfoAndTokens(code: string): Promise<{ userInfo: GoogleUserInfo; tokens: any }> {
     if (!this.oauth2Client) {
       throw new Error('Google OAuth not configured');
     }
 
     try {
       const { tokens } = await this.oauth2Client.getToken(code);
-      this.oauth2Client.setCredentials(tokens);
+      const userAuthClient = this.createClientForTokens(tokens);
 
       const oauth2 = google.oauth2({
-        auth: this.oauth2Client,
+        auth: userAuthClient,
         version: 'v2'
       });
 
       const { data } = await oauth2.userinfo.get();
 
       return {
-        id: data.id!,
-        email: data.email!,
-        name: data.name!,
-        picture: data.picture || undefined,
-        locale: data.locale || undefined
+        userInfo: {
+          id: data.id!,
+          email: data.email!,
+          name: data.name!,
+          picture: data.picture || undefined,
+          locale: data.locale || undefined
+        },
+        tokens
       };
     } catch (error) {
-      console.error('Error getting user info from Google:', error);
+      console.error('Error getting user info and tokens from Google:', error);
       throw new Error('Failed to authenticate with Google');
     }
+  }
+
+  async getUserInfo(code: string): Promise<GoogleUserInfo> {
+    const result = await this.getUserInfoAndTokens(code);
+    return result.userInfo;
+  }
+
+  saveUserTokens(userId: string, tokens: any): void {
+    if (userId && tokens) {
+      this.userTokensMap.set(userId, tokens);
+    }
+  }
+
+  getUserTokens(userId: string): any {
+    return this.userTokensMap.get(userId);
+  }
+
+  deleteUserTokens(userId: string): void {
+    this.userTokensMap.delete(userId);
+  }
+
+  hasUserTokens(userId: string): boolean {
+    return this.userTokensMap.has(userId);
+  }
+
+  /**
+   * Creates a native Google Document inside the user's Google Drive and populates it with the text content.
+   */
+  async createGoogleDoc(tokens: any, title: string, content: string): Promise<{ documentId: string; url: string }> {
+    if (!this.oauth2Client) {
+      throw new Error('Google OAuth no está configurado en el servidor.');
+    }
+
+    const authClient = this.createClientForTokens(tokens);
+    authClient.on('tokens', (newTokens: any) => {
+      Object.assign(tokens, newTokens);
+    });
+
+    const docs = google.docs({ version: 'v1', auth: authClient });
+
+    // 1. Create blank document with the legal title
+    const createRes = await docs.documents.create({
+      requestBody: {
+        title: title || 'Documento Legal - LeFriApp'
+      }
+    });
+
+    const documentId = createRes.data.documentId;
+    if (!documentId) {
+      throw new Error('Google Docs no devolvió un identificador de documento.');
+    }
+
+    // 2. Insert formatted legal text into the document
+    const cleanContent = (content || '').trim();
+    if (cleanContent.length > 0) {
+      await docs.documents.batchUpdate({
+        documentId,
+        requestBody: {
+          requests: [
+            {
+              insertText: {
+                location: {
+                  index: 1
+                },
+                text: cleanContent
+              }
+            }
+          ]
+        }
+      });
+    }
+
+    return {
+      documentId,
+      url: `https://docs.google.com/document/d/${documentId}/edit`
+    };
   }
 
   isConfigured(): boolean {

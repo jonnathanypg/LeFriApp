@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { toast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 const DOCUMENT_TYPES = [
   { id: 'laboral_despido', title: 'Reclamo por Despido Intempestivo / Liquidación', category: 'Laboral', icon: Briefcase },
@@ -54,6 +55,20 @@ export default function DocumentosPage() {
   const [isCopied, setIsCopied] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingDocx, setIsExportingDocx] = useState(false);
+  const [isExportingGoogleDocs, setIsExportingGoogleDocs] = useState(false);
+  const [showGoogleConnectModal, setShowGoogleConnectModal] = useState(false);
+  const [googleAuthUrl, setGoogleAuthUrl] = useState<string>('');
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('google_connected') === 'true') {
+      toast({
+        title: "¡Google Drive conectado!",
+        description: "Tu cuenta de Google está vinculada. Ahora puedes exportar tus documentos directamente con todo su contenido a Google Docs.",
+      });
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // Helper to strip markdown code block wrapping if LLM formatted it as ```markdown ... ```
   const getCleanDocumentContent = (rawContent?: string) => {
@@ -88,24 +103,24 @@ export default function DocumentosPage() {
       setGeneratedDoc(data);
       queryClient.invalidateQueries({ queryKey: ['/api/citizen/documents/drafts'] });
       toast({
-        title: t.docGeneratedSuccess || "¡Documento redactado con éxito!",
-        description: t.docGeneratedSuccessDesc || "Revisa el borrador legal a la derecha para descargarlo o exportarlo."
+        title: (t as any).documentGenerated || (t as any).docGeneratedSuccess || "Documento generado",
+        description: (t as any).documentGeneratedDesc || (t as any).docGeneratedSuccessDesc || "El escrito ha sido fundamentado y redactado con éxito.",
       });
     },
     onError: (err: any) => {
       toast({
-        title: t.error || "Error",
-        description: err.message || "No se pudo generar el documento.",
+        title: (t as any).error || "Error",
+        description: err.message || "No se pudo generar el escrito legal.",
         variant: "destructive"
       });
     }
   });
 
   const handleVoiceTranscription = (text: string) => {
-    setFacts(prev => prev ? `${prev}\n${text}` : text);
+    setFacts(prev => prev ? `${prev} ${text}` : text);
     toast({
-      title: t.audioTranscribed || "Audio transcrito",
-      description: t.audioTranscribedDesc || "Los hechos dictados se han añadido a la descripción."
+      title: (t as any).audioTranscribed || "Audio transcrito",
+      description: (t as any).dictationSuccess || (t as any).audioTranscribedDesc || "Se añadió el dictado a los hechos.",
     });
   };
 
@@ -120,18 +135,62 @@ export default function DocumentosPage() {
 
   const handleExportGoogleDocs = async () => {
     if (!generatedDoc?.documentContent) return;
+    setIsExportingGoogleDocs(true);
+    const cleanContent = getCleanDocumentContent(generatedDoc.documentContent);
+    const docTitle = generatedDoc.title || 'Documento Legal';
+
+    try {
+      const response = await fetch('/api/citizen/documents/export-google-docs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: docTitle,
+          content: cleanContent
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.status === 401 && data.needsAuth) {
+        setGoogleAuthUrl(data.authUrl || '/api/auth/google/drive-url');
+        setShowGoogleConnectModal(true);
+        return;
+      }
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'No se pudo crear el documento en Google Docs');
+      }
+
+      window.open(data.url, '_blank');
+      toast({
+        title: "¡Documento creado en Google Docs!",
+        description: "El documento se abrió en una nueva pestaña con todo su contenido listo para editar o imprimir.",
+      });
+    } catch (err: any) {
+      console.error('Google Docs export error:', err);
+      toast({
+        title: t.error || "Error al exportar",
+        description: err.message || "Ocurrió un error al contactar con Google Docs.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsExportingGoogleDocs(false);
+    }
+  };
+
+  const handleManualGoogleDocsFallback = async () => {
+    if (!generatedDoc?.documentContent) return;
     const cleanText = getCleanDocumentContent(generatedDoc.documentContent);
     try {
       await navigator.clipboard.writeText(cleanText);
-      toast({
-        title: "¡Texto legal copiado!",
-        description: "Se abrió Google Docs y el borrador está en tu portapapeles. Solo presiona Ctrl+V (o Pegar).",
-      });
-    } catch {
-      // ignore clipboard failure
-    }
+    } catch (e) {}
+    setShowGoogleConnectModal(false);
     const googleDocsUrl = `https://docs.google.com/document/create?title=${encodeURIComponent(generatedDoc.title || 'Documento Legal')}`;
     window.open(googleDocsUrl, '_blank');
+    toast({
+      title: "Borrador en portapapeles",
+      description: "Se abrió Google Docs. Presiona Ctrl + V para pegar el contenido en tu nuevo documento.",
+    });
   };
 
   const handleExportDocx = async () => {
@@ -630,10 +689,11 @@ export default function DocumentosPage() {
                           <Button
                             size="sm"
                             onClick={handleExportGoogleDocs}
-                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg flex items-center space-x-1.5"
+                            disabled={isExportingGoogleDocs}
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-xs rounded-lg flex items-center space-x-1.5 shadow-sm"
                           >
                             <ExternalLink className="w-3.5 h-3.5" />
-                            <span>{t.openGoogleDocs || "Abrir en Google Docs"}</span>
+                            <span>{isExportingGoogleDocs ? "Creando en Docs..." : (t.openGoogleDocs || "Crear en Google Docs")}</span>
                           </Button>
                         </div>
                       </div>
@@ -645,6 +705,76 @@ export default function DocumentosPage() {
           </div>
         </div>
       </main>
+
+      {/* Modal de Conexión y Asistencia para Google Docs / Drive */}
+      <Dialog open={showGoogleConnectModal} onOpenChange={setShowGoogleConnectModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2 text-white">
+              <Sparkles className="w-5 h-5 text-blue-400" />
+              <span>Conectar con Google Drive</span>
+            </DialogTitle>
+            <DialogDescription className="text-slate-300 text-xs leading-relaxed pt-2">
+              Para que LeFriApp pueda redactar y guardar el escrito íntegro directamente en tu cuenta de Google Docs (con todos sus artículos, considerandos y firmas sin que tengas que copiar y pegar a mano), Google requiere tu autorización de permisos.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="p-3.5 bg-slate-950/80 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2.5">
+            <div className="flex items-start space-x-2.5">
+              <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span><strong>Permiso seguro:</strong> Solo accede a los archivos creados con LeFriApp, nunca a tus otros documentos privados.</span>
+            </div>
+            <div className="flex items-start space-x-2.5">
+              <Check className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <span><strong>Exportación automática:</strong> El archivo se abre en tu navegador listo y 100% relleno.</span>
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-col gap-2 pt-2">
+            <Button
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-xl py-2.5 flex items-center justify-center space-x-2 shadow-lg shadow-blue-600/20"
+              onClick={() => {
+                if (googleAuthUrl) {
+                  window.location.href = googleAuthUrl;
+                } else {
+                  fetch('/api/auth/google/drive-url')
+                    .then(r => r.json())
+                    .then(d => {
+                      if (d.authUrl) window.location.href = d.authUrl;
+                    });
+                }
+              }}
+            >
+              <ExternalLink className="w-4 h-4" />
+              <span>Conectar y Autorizar Google Drive</span>
+            </Button>
+
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
+                onClick={handleManualGoogleDocsFallback}
+              >
+                <Copy className="w-3.5 h-3.5 mr-1" />
+                <span>Copiar y abrir blanco</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="border-slate-800 bg-slate-950 hover:bg-slate-800 text-slate-300 text-xs rounded-xl"
+                onClick={() => {
+                  setShowGoogleConnectModal(false);
+                  handleExportDocx();
+                }}
+              >
+                <FileDown className="w-3.5 h-3.5 mr-1" />
+                <span>Descargar Word</span>
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

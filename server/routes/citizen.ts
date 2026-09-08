@@ -21,6 +21,7 @@ import multer from 'multer';
 import puppeteer from 'puppeteer';
 import crypto from 'crypto';
 import { Document as DocxDocument, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
+import { googleAuthService } from "../services/google-auth";
 
 export const citizenRouter = Router();
 
@@ -829,7 +830,7 @@ citizenRouter.post("/documents/export-docx", async (req: any, res) => {
       } else {
         // Normal paragraph with basic bold handling (**bold**)
         const parts = line.split(/(\*\*.*?\*\*)/g);
-        const runs = parts.map(part => {
+        const runs = parts.map((part: string) => {
           if (part.startsWith('**') && part.endsWith('**')) {
             return new TextRun({
               text: part.slice(2, -2),
@@ -892,6 +893,84 @@ citizenRouter.post("/documents/export-docx", async (req: any, res) => {
   } catch (error: any) {
     console.error("[CitizenRouter] Error in /documents/export-docx:", error);
     res.status(500).json({ error: "Failed to export DOCX" });
+  }
+});
+
+/**
+ * Export Document directly into the user's Google Docs / Drive account
+ */
+citizenRouter.post("/documents/export-google-docs", async (req: any, res) => {
+  try {
+    const { title = "Documento Legal", content } = req.body;
+    if (!content) {
+      return res.status(400).json({ error: "El contenido del documento es requerido." });
+    }
+
+    const userId = req.session?.userId;
+    // Check tokens in session or service cache
+    let tokens = req.session?.googleTokens || (userId ? googleAuthService.getUserTokens(userId) : null);
+
+    if (!tokens || (!tokens.access_token && !tokens.refresh_token)) {
+      const authUrl = googleAuthService.getDriveAuthUrl({
+        returnTo: '/documentos?google_connected=true'
+      });
+      return res.status(401).json({
+        needsAuth: true,
+        message: "Se requiere autorización de Google Drive para crear el documento.",
+        authUrl
+      });
+    }
+
+    // Clean markdown code blocks if present
+    const cleanedContent = content
+      .replace(/^```[a-zA-Z]*\n/gm, '')
+      .replace(/^```$/gm, '')
+      .trim();
+
+    try {
+      const result = await googleAuthService.createGoogleDoc(tokens, title, cleanedContent);
+
+      // Persist tokens in session and cache if refreshed
+      req.session.googleTokens = tokens;
+      if (userId) {
+        googleAuthService.saveUserTokens(userId, tokens);
+      }
+
+      return res.json({
+        success: true,
+        url: result.url,
+        documentId: result.documentId
+      });
+    } catch (googleError: any) {
+      console.error("[CitizenRouter] Google API error in export-google-docs:", googleError);
+      const errMsg = String(googleError.message || '');
+      const isAuthError =
+        errMsg.includes('invalid_grant') ||
+        errMsg.includes('insufficient_scope') ||
+        errMsg.includes('unauthorized') ||
+        errMsg.includes('access_denied') ||
+        googleError.code === 401 ||
+        googleError.code === 403;
+
+      if (isAuthError) {
+        delete req.session.googleTokens;
+        if (userId) googleAuthService.deleteUserTokens(userId);
+
+        const authUrl = googleAuthService.getDriveAuthUrl({
+          returnTo: '/documentos?google_connected=true'
+        });
+        return res.status(401).json({
+          needsAuth: true,
+          message: "La sesión o permisos de Google Drive requieren actualización. Por favor autoriza con Google.",
+          authUrl
+        });
+      }
+
+      throw googleError;
+    }
+  } catch (error: any) {
+    console.error("[CitizenRouter] Error in /documents/export-google-docs:", error);
+    res.status(500).json({ error: error.message || "Error al exportar documento a Google Docs" });
   }
 });
 
@@ -1091,11 +1170,11 @@ citizenRouter.post("/emergency/with-voice", upload.any(), async (req: any, res) 
 
     const emergencyMessage = await geminiService.generateEmergencyMessage({
       userName: user.name,
-      location: { 
-        latitude: latitude ? parseFloat(latitude) : undefined, 
-        longitude: longitude ? parseFloat(longitude) : undefined, 
+      location: (latitude && longitude) ? { 
+        latitude: parseFloat(latitude), 
+        longitude: parseFloat(longitude), 
         address 
-      },
+      } : undefined,
       language: user.language
     });
 
@@ -1115,7 +1194,7 @@ citizenRouter.post("/emergency/with-voice", upload.any(), async (req: any, res) 
           to: contact.phone,
           userName: user.name,
           message: fullMessage,
-          location: { latitude: latitude ? parseFloat(latitude) : undefined, longitude: longitude ? parseFloat(longitude) : undefined, address }
+          location: (latitude && longitude) ? { latitude: parseFloat(latitude), longitude: parseFloat(longitude), address } : undefined
         });
         emailResults.push({ phone: contact.phone, name: contact.name, success: emailResult.success, error: emailResult.error });
       }

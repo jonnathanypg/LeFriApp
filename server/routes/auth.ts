@@ -64,6 +64,26 @@ authRouter.get("/google/url", (req, res) => {
   }
 });
 
+authRouter.get("/google/drive-url", (req, res) => {
+  try {
+    const returnTo = (req.query.returnTo as string) || '/documentos?google_connected=true';
+    const authUrl = googleAuthService.getDriveAuthUrl({ returnTo });
+    res.json({ authUrl });
+  } catch (error) {
+    console.error('Error generating Google Drive OAuth URL:', error);
+    res.status(500).json({ error: 'Failed to generate Drive OAuth URL' });
+  }
+});
+
+authRouter.get("/google/status", (req: any, res) => {
+  const userId = req.session?.userId;
+  const hasSessionTokens = !!(req.session?.googleTokens?.access_token || req.session?.googleTokens?.refresh_token);
+  const hasServiceTokens = !!(userId && googleAuthService.hasUserTokens(userId));
+  res.json({
+    connected: hasSessionTokens || hasServiceTokens
+  });
+});
+
 authRouter.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -200,13 +220,33 @@ authRouter.post("/handshake", async (req, res) => {
   }
 });
 
-authRouter.get("/google/callback", async (req, res) => {
+authRouter.get("/google/callback", async (req: any, res) => {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     if (!code) return res.redirect('/login?error=no_code');
 
-    const googleUser = await googleAuthService.getUserInfo(code as string);
+    const { userInfo: googleUser, tokens } = await googleAuthService.getUserInfoAndTokens(code as string);
+
+    // Decode state if provided
+    let stateData: any = null;
+    if (state && typeof state === 'string') {
+      try {
+        stateData = JSON.parse(Buffer.from(state, 'base64').toString('utf-8'));
+      } catch {
+        try { stateData = JSON.parse(state); } catch {}
+      }
+    }
     
+    // If the user was already authenticated and is connecting Drive:
+    if (req.session?.userId && stateData?.action === 'drive_export') {
+      req.session.googleTokens = tokens;
+      googleAuthService.saveUserTokens(req.session.userId, tokens);
+      return req.session.save((saveErr: any) => {
+        if (saveErr) console.error("Session save error on drive connect:", saveErr);
+        res.redirect(stateData.returnTo || '/documentos?google_connected=true');
+      });
+    }
+
     let user = await storage.getUserByGoogleId(googleUser.id);
     if (!user) {
       user = await storage.getUserByEmail(googleUser.email);
@@ -223,14 +263,24 @@ authRouter.get("/google/callback", async (req, res) => {
         user = await storage.updateUser(user.id, { googleId: googleUser.id });
       }
     }
+
+    if (user?.id) {
+      googleAuthService.saveUserTokens(user.id, tokens);
+    }
     
     // Regenerate session to ensure a fresh session ID is issued and
     // the Set-Cookie header is sent with the redirect response.
     req.session.regenerate((err: any) => {
       if (err) return res.redirect('/login?error=session');
       req.session.userId = user.id;
+      req.session.googleTokens = tokens;
       req.session.save((saveErr: any) => {
         if (saveErr) return res.redirect('/login?error=session');
+
+        if (stateData?.returnTo) {
+          return res.redirect(stateData.returnTo);
+        }
+
         if (user.role === 'admin') {
           return res.redirect('/admin/dashboard');
         } else if (user.role === 'lawyer') {

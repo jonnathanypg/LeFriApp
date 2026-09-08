@@ -611,7 +611,7 @@ export default function ConstitucionPage() {
 
                       <div className="pt-4 border-t border-slate-800 flex justify-between items-center">
                         <span className="text-[11px] text-slate-500">
-                          {t.legalBasisConstitution || "Fundamento: Constitución Política"} ({t.countries?.[selectedCountry] || selectedCountry})
+                          {t.legalBasisConstitution || "Fundamento: Constitución Política"} ({(t.countries as any)?.[selectedCountry] || selectedCountry})
                         </span>
                         <Button 
                           size="sm" 

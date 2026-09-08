@@ -57,7 +57,7 @@ adminRouter.post("/config", requireAdmin, async (req, res) => {
       }
     }
     if (internationalizationEnabled !== undefined) {
-      await storage.updateSystemConfig('internationalization_enabled', Boolean(internationalizationEnabled));
+      await storage.updateSystemConfig('internationalization_enabled', String(Boolean(internationalizationEnabled)));
     }
     res.json({ success: true });
   } catch (error: any) {

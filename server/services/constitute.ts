@@ -237,7 +237,7 @@ export class ConstituteService {
       }
 
       const articleRegex = /<p[^>]*>\s*(Art[ií]culo\s*\d+[^\<]*)\s*<\/p>/gi;
-      const matches = [...fullHtml.matchAll(articleRegex)];
+      const matches = Array.from(fullHtml.matchAll(articleRegex)) as RegExpExecArray[];
       const articles: { id: string; title: string; content: string }[] = [];
 
       for (let i = 0; i < matches.length; i++) {
@@ -371,7 +371,7 @@ export class ConstituteService {
       const fullHtml = await this.getConstitutionHtml(consId, language);
       if (fullHtml && fullHtml.length > 500) {
         const articleRegex = /<p[^>]*>\s*(Art[ií]culo\s*\d+[^\<]*)\s*<\/p>/gi;
-        const matches = [...fullHtml.matchAll(articleRegex)];
+        const matches = Array.from(fullHtml.matchAll(articleRegex)) as RegExpExecArray[];
         const allArticles: { title: string; content: string }[] = [];
 
         for (let i = 0; i < matches.length; i++) {
