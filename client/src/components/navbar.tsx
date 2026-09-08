@@ -81,14 +81,14 @@ export function Navbar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo & Navigation Links */}
           <div className="flex items-center space-x-8">
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-sm shadow-indigo-600/30">
-                <Scale className="w-5 h-5 text-white" />
+            <Link href={user ? "/dashboard" : "/"} className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-indigo-600/30 border border-indigo-500/40 rounded-lg flex items-center justify-center text-indigo-400 shadow-sm shadow-indigo-600/20">
+                <Scale className="w-4 h-4" />
               </div>
               <h1 className="text-xl font-bold text-white">LeFriApp</h1>
             </Link>
 
-            {user && (
+            {user ? (
               <nav className="hidden md:flex items-center space-x-1">
                 <Link 
                   href="/dashboard" 
@@ -161,58 +161,94 @@ export function Navbar() {
                   <span>{t.emergency}</span>
                 </Link>
               </nav>
+            ) : (
+              <nav className="hidden md:flex items-center space-x-3 text-xs text-slate-400">
+                <Link href="/" className="hover:text-white transition">
+                  {language === 'en' ? 'Home' : language === 'pt' ? 'Início' : 'Inicio'}
+                </Link>
+                <span>&bull;</span>
+                <Link href="/chat" className="hover:text-indigo-400 transition flex items-center gap-1">
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>{language === 'en' ? 'Free Legal Chat' : language === 'pt' ? 'Chat Jurídico' : 'Consulta Gratuita'}</span>
+                </Link>
+              </nav>
             )}
           </div>
 
           {/* Right section */}
-          <div className="flex items-center space-x-4">
-            {/* Language Selector - only visible when internationalization is active */}
-            {isI18nActive && (
-              <Select value={language} onValueChange={handleLanguageChange}>
-                <SelectTrigger className="w-[140px] bg-slate-900 border-slate-700 text-slate-200">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-900 border-slate-700 text-slate-200">
-                  {languageOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
+          <div className="flex items-center space-x-3 sm:space-x-4">
+            {/* Language Switcher (Always available across public and private pages) */}
+            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-lg p-0.5 text-xs">
+              <button 
+                type="button"
+                onClick={() => handleLanguageChange('es')}
+                className={`px-2 py-1 rounded transition-all font-medium ${language === 'es' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                title="Español"
+              >
+                ES
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleLanguageChange('en')}
+                className={`px-2 py-1 rounded transition-all font-medium ${language === 'en' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                title="English"
+              >
+                EN
+              </button>
+              <button 
+                type="button"
+                onClick={() => handleLanguageChange('pt')}
+                className={`px-2 py-1 rounded transition-all font-medium ${language === 'pt' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                title="Português"
+              >
+                PT
+              </button>
+            </div>
 
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="flex items-center space-x-2 text-slate-200 hover:text-white hover:bg-slate-900">
-                  <Avatar className="w-8 h-8">
-                    <AvatarFallback className="bg-indigo-600 text-white text-sm">
-                      {getInitials(user?.name || '')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium text-slate-200">
-                    {getFirstName(user?.name || '')}
-                  </span>
-                  <ChevronDown className="w-4 h-4 text-slate-400" />
+            {/* User Menu or Public Auth CTA */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center space-x-2 text-slate-200 hover:text-white hover:bg-slate-900">
+                    <Avatar className="w-8 h-8">
+                      <AvatarFallback className="bg-indigo-600 text-white text-sm">
+                        {getInitials(user?.name || '')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium text-slate-200">
+                      {getFirstName(user?.name || '')}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-800 text-slate-200">
+                  <DropdownMenuItem onClick={() => handleNavigation('/profile')} className="hover:bg-slate-800 focus:bg-slate-800 text-slate-200 focus:text-white cursor-pointer">
+                    <User className="w-4 h-4 mr-2" />
+                    {t.profile}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/profile')} className="hover:bg-slate-800 focus:bg-slate-800 text-slate-200 focus:text-white cursor-pointer">
+                    <Settings className="w-4 h-4 mr-2" />
+                    {t.settings}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-slate-800" />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-slate-800 focus:bg-slate-800 focus:text-red-300 cursor-pointer">
+                    <LogOut className="w-4 h-4 mr-2" />
+                    {t.logout}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <Button 
+                  variant="default"
+                  size="sm"
+                  onClick={() => setLocation('/login')}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs rounded-xl shadow-md shadow-indigo-600/25 h-8 px-3"
+                >
+                  {language === 'en' ? 'Sign In' : language === 'pt' ? 'Entrar' : 'Ingresar'}
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-slate-900 border-slate-800 text-slate-200">
-                <DropdownMenuItem onClick={() => handleNavigation('/profile')} className="hover:bg-slate-800 focus:bg-slate-800 text-slate-200 focus:text-white cursor-pointer">
-                  <User className="w-4 h-4 mr-2" />
-                  {t.profile}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/profile')} className="hover:bg-slate-800 focus:bg-slate-800 text-slate-200 focus:text-white cursor-pointer">
-                  <Settings className="w-4 h-4 mr-2" />
-                  {t.settings}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-slate-800" />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-slate-800 focus:bg-slate-800 focus:text-red-300 cursor-pointer">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  {t.logout}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </div>
+            )}
           </div>
         </div>
       </div>

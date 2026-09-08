@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { ShieldCheck, Lock, Check, Cookie } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const CONSENT_STORAGE_KEY = 'lefri_privacy_consent';
 const CONSENT_COOKIE_NAME = 'lefri_privacy_consent';
@@ -39,6 +40,8 @@ function hasUserConsented(): boolean {
 }
 
 export function PrivacyBanner() {
+  const { language } = useLanguage();
+
   // Initialize state synchronously so there is no flickering or delay
   const [isVisible, setIsVisible] = useState(() => {
     return !hasUserConsented();
@@ -106,6 +109,44 @@ export function PrivacyBanner() {
 
   if (!isVisible) return null;
 
+  const content = {
+    es: {
+      tagPrivacy: "Privacidad & LOPDP / RGPD",
+      tagCookies: "Cookies Técnicas",
+      desc: "En LeFriApp y Fundación Underlife protegemos tus consultas ciudadanas. Utilizamos cookies técnicas esenciales para garantizar la seguridad de tu sesión y la funcionalidad del sistema. Tus datos no se comercializan con terceros ni se emplean para publicidad intrusiva.",
+      policyIntro: "Consulta nuestras políticas:",
+      privacy: "Privacidad",
+      terms: "Términos",
+      cookies: "Cookies",
+      close: "Cerrar",
+      accept: "Aceptar y Continuar"
+    },
+    en: {
+      tagPrivacy: "Privacy & LOPDP / GDPR",
+      tagCookies: "Technical Cookies",
+      desc: "At LeFriApp and Fundación Underlife we protect your civic legal queries. We use essential technical cookies to ensure session security and system operations. Your data is never sold to third parties or used for tracking ads.",
+      policyIntro: "Read our policies:",
+      privacy: "Privacy",
+      terms: "Terms",
+      cookies: "Cookies",
+      close: "Close",
+      accept: "Accept and Continue"
+    },
+    pt: {
+      tagPrivacy: "Privacidade & LOPDP / RGPD",
+      tagCookies: "Cookies Técnicos",
+      desc: "No LeFriApp e na Fundación Underlife protegemos suas consultas cidadãs. Utilizamos cookies técnicos essenciais para garantir a segurança da sessão e o pleno funcionamento. Seus dados não são vendidos a terceiros nem usados para publicidade invasiva.",
+      policyIntro: "Consulte nossas políticas:",
+      privacy: "Privacidade",
+      terms: "Termos",
+      cookies: "Cookies",
+      close: "Fechar",
+      accept: "Aceitar e Continuar"
+    }
+  };
+
+  const t = content[language as 'es' | 'en' | 'pt'] || content.es;
+
   return (
     <aside
       role="dialog"
@@ -125,39 +166,39 @@ export function PrivacyBanner() {
             <div className="space-y-1 flex-1 min-w-0">
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-400 uppercase tracking-wider bg-indigo-950/60 px-2 py-0.5 rounded-full border border-indigo-800/40">
-                  <Lock className="w-3 h-3" /> Privacidad & LOPDP / RGPD
+                  <Lock className="w-3 h-3" /> {t.tagPrivacy}
                 </span>
                 <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
-                  <Cookie className="w-3 h-3 text-amber-400" /> Cookies Técnicas
+                  <Cookie className="w-3 h-3 text-amber-400" /> {t.tagCookies}
                 </span>
               </div>
 
               <p className="text-xs text-slate-300 leading-relaxed font-normal">
-                En <strong className="text-white font-medium">LeFriApp</strong> y <strong className="text-white font-medium">Fundación Underlife</strong> protegemos tus consultas ciudadanas. Utilizamos cookies técnicas esenciales para garantizar la seguridad de tu sesión y la funcionalidad del sistema. Tus datos no se comercializan con terceros ni se emplean para publicidad intrusiva.
+                {t.desc}
               </p>
 
               {/* Legal Quick Links */}
               <div className="pt-1 flex flex-wrap items-center gap-x-2 text-[11px] text-slate-400">
-                <span>Consulta nuestras políticas:</span>
+                <span>{t.policyIntro}</span>
                 <Link
                   href="/privacidad"
                   className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-2 hover:underline-offset-4 transition-colors"
                 >
-                  Privacidad
+                  {t.privacy}
                 </Link>
                 <span className="text-slate-600">&bull;</span>
                 <Link
                   href="/terminos"
                   className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-2 hover:underline-offset-4 transition-colors"
                 >
-                  Términos
+                  {t.terms}
                 </Link>
                 <span className="text-slate-600">&bull;</span>
                 <Link
                   href="/cookies"
                   className="text-indigo-400 hover:text-indigo-300 font-medium underline underline-offset-2 hover:underline-offset-4 transition-colors"
                 >
-                  Cookies
+                  {t.cookies}
                 </Link>
               </div>
             </div>
@@ -171,9 +212,9 @@ export function PrivacyBanner() {
               size="sm"
               onClick={() => setIsVisible(false)}
               className="h-9 px-3.5 rounded-xl border-slate-700 bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium transition"
-              title="Cerrar aviso provisionalmente durante esta sesión"
+              title={t.close}
             >
-              Cerrar
+              {t.close}
             </Button>
 
             <Button
@@ -183,7 +224,7 @@ export function PrivacyBanner() {
               className="h-9 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 active:scale-[0.98] text-white text-xs font-medium transition shadow-md shadow-indigo-900/50 flex items-center space-x-1.5"
             >
               <Check className="w-3.5 h-3.5 text-white" />
-              <span>Aceptar y Continuar</span>
+              <span>{t.accept}</span>
             </Button>
           </div>
 

@@ -3,7 +3,7 @@ import { useLocation } from 'wouter';
 import { 
   BookOpen, ShieldCheck, HeartHandshake, Sparkles, ArrowRight, CheckCircle2, 
   Globe, Users, Lock, ChevronRight, MessageSquare, 
-  Layers, Lightbulb, Compass, Search
+  Layers, Lightbulb, Compass, Search, Scale
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -134,8 +134,8 @@ export default function LandingHome() {
       <header className="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-teal-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-              <BookOpen className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg bg-indigo-600/30 border border-indigo-500/40 flex items-center justify-center text-indigo-400 shadow-sm shadow-indigo-600/20">
+              <Scale className="w-4 h-4" />
             </div>
             <div>
                 <div className="flex items-center space-x-2">
