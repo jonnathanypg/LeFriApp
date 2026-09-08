@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { VoiceRecorder } from '@/components/voice-recorder';
 import { ShieldAlert, Briefcase, Users, FileText, CheckCircle2, AlertTriangle, ArrowRight, ArrowLeft, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { FormattedMarkdown } from '@/components/formatted-markdown';
 
 interface LegalIntakeWizardProps {
   onComplete?: (intakeData: any) => void;
@@ -69,7 +70,7 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
     setStep(3);
 
     try {
-      // Simulate/Run Viability calculation and Gemini analysis
+      // Run Viability calculation and Gemini analysis
       const res = await fetch('/api/citizen/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -80,21 +81,51 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
         })
       });
 
-      // Calculate sample viability score based on slot completeness
+      // Calculate viability score based on slot completeness
       let score = 65;
       if (incidentDate) score += 10;
       if (location) score += 10;
       if (opposingParty) score += 15;
       setViabilityScore(Math.min(score, 98));
 
-      setGroundingArticles([
+      let streamText = '';
+      const detectedArticles: string[] = [
         'Código Orgánico Integral Penal Art. 77 - Derechos del Detenido',
         'Código del Trabajo Art. 185 - Bonificación por Desahucio',
         'Constitución de la República del Ecuador Art. 76 - Enfoque al Debido Proceso'
-      ]);
+      ];
+
+      if (res.ok && res.body) {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                if (data.type === 'chunk') {
+                  streamText += data.data;
+                } else if (data.type === 'citations' && data.data?.citations) {
+                  const newCites = data.data.citations.map((c: any) => c.title);
+                  if (newCites.length > 0) {
+                    detectedArticles.splice(0, detectedArticles.length, ...newCites);
+                  }
+                }
+              } catch (e) {}
+            }
+          }
+        }
+      }
+
+      setGroundingArticles(detectedArticles);
 
       setAiDiagnosis(
-        `Basado en los datos ingresados para la categoría ${category.toUpperCase()}, tu caso presenta una viabilidad legal alta para iniciar una acción formal. Se recomienda conservar comprobantes y testigos del hecho.`
+        streamText.trim() ||
+        `Basado en los datos ingresados para la categoría **${category.toUpperCase()}**, tu caso presenta una viabilidad legal alta para iniciar una acción formal. Se recomienda conservar comprobantes y testigos del hecho.`
       );
 
       setStep(4);
@@ -376,9 +407,9 @@ export function LegalIntakeWizard({ onComplete, onCancel }: LegalIntakeWizardPro
 
             <div className="space-y-2">
               <h4 className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Diagnóstico Agéntico:</h4>
-              <p className="text-sm text-slate-200 bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/60 leading-relaxed">
-                {aiDiagnosis}
-              </p>
+              <div className="bg-slate-850/80 p-4 rounded-xl border border-slate-700/60 bg-slate-900/60 shadow-inner">
+                <FormattedMarkdown content={aiDiagnosis} />
+              </div>
             </div>
 
             <div className="space-y-2">

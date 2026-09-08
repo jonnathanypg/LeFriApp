@@ -3,6 +3,7 @@ import { useLocation } from 'wouter';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -199,6 +200,7 @@ export default function Dashboard() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

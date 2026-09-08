@@ -9,6 +9,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import type { ChatMessage, ConsultationResponse } from '@/types';
 import { Send, Mic, Bot, Circle } from 'lucide-react';
+import { FormattedMarkdown } from '@/components/formatted-markdown';
 
 interface ChatInterfaceProps {
   country: string;
@@ -246,10 +247,10 @@ export function ChatInterface({ country, processId }: ChatInterfaceProps) {
                   className={`rounded-2xl p-3 max-w-sm ${
                     message.sender === 'user'
                       ? 'bg-blue-500 text-white rounded-tr-sm'
-                      : 'bg-neutral-100 text-neutral-800 rounded-tl-sm'
+                      : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-sm'
                   }`}
                 >
-                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <FormattedMarkdown content={message.content} isUser={message.sender === 'user'} />
                 </div>
 
                 {message.sender === 'user' && user && (

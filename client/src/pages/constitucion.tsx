@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
@@ -272,6 +273,7 @@ export default function ConstitucionPage() {
   const [visibleCount, setVisibleCount] = useState(12);
   const [selectedArticle, setSelectedArticle] = useState<any>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
+  const explanationSectionRef = useRef<HTMLDivElement>(null);
 
   const { data: systemSettings } = useQuery<{ internationalizationEnabled: boolean }>({
     queryKey: ['/api/citizen/system/settings'],
@@ -342,6 +344,11 @@ export default function ConstitucionPage() {
     setSelectedArticle(article);
     setExplanation(null);
     explainMutation.mutate(article.content);
+
+    // En pantallas móviles / responsivas, hacer scroll suave al módulo de explicación
+    setTimeout(() => {
+      explanationSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -565,7 +572,7 @@ export default function ConstitucionPage() {
           </div>
 
           {/* Right Column: AI Citizen Explanation Studio */}
-          <div className="lg:col-span-6">
+          <div ref={explanationSectionRef} className="lg:col-span-6 scroll-mt-20">
             <div className="sticky top-20">
               <Card className="bg-slate-900 border-slate-800 rounded-2xl">
                 <CardHeader className="p-5 border-b border-slate-800/80">
@@ -633,6 +640,7 @@ export default function ConstitucionPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

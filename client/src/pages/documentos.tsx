@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { VoiceRecorder } from '@/components/voice-recorder';
 import { useAuth } from '@/hooks/use-auth';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -783,8 +784,9 @@ export default function DocumentosPage() {
               </Button>
             </div>
           </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      <Footer />
     </div>
   );
 }

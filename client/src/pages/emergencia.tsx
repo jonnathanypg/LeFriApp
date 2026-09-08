@@ -11,6 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { EmergencyButton } from '@/components/emergency-button';
 import { api } from '@/lib/api';
 import { EditContactDialog } from '@/components/edit-contact-dialog';
@@ -300,6 +301,7 @@ export default function Emergencia() {
         isOpen={!!editingContact}
         onClose={() => setEditingContact(null)}
       />
+      <Footer />
     </div>
   );
 }

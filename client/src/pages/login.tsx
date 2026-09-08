@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTranslations } from '@/lib/i18n';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { TypeformAuth } from '@/components/typeform-auth';
+import { Footer } from '@/components/footer';
 
 export default function Login() {
   const [location, setLocation] = useLocation();
@@ -384,6 +385,7 @@ export default function Login() {
           </Card>
         )}
       </main>
+      <Footer />
     </div>
   );
 }

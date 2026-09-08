@@ -19,11 +19,15 @@ import Profile from "@/pages/profile";
 import Constitucion from "@/pages/constitucion";
 import Documentos from "@/pages/documentos";
 import NotFound from "@/pages/not-found";
+import PoliticaPrivacidad from "@/pages/legal/privacidad";
+import TerminosServicio from "@/pages/legal/terminos";
+import PoliticaCookies from "@/pages/legal/cookies";
 import { ProcessesPage } from "@/pages/processes";
 import { ProcessDetailPage } from "@/pages/process-detail";
 import LawyerDashboard from "@/pages/lawyer-dashboard";
 import CitizenDashboard from "@/pages/citizen-dashboard";
 import AdminDashboard from "@/pages/admin-dashboard";
+import { PrivacyBanner } from "@/components/privacy-banner";
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, isLoading, isInitialized } = useAuth();
@@ -55,6 +59,14 @@ function Router() {
       {/* Public Chat & Landing */}
       <Route path="/chat" component={PublicChat} />
       <Route path="/login" component={Login} />
+
+      {/* Compliance & Legal Pages */}
+      <Route path="/privacidad" component={PoliticaPrivacidad} />
+      <Route path="/legal/privacidad" component={PoliticaPrivacidad} />
+      <Route path="/terminos" component={TerminosServicio} />
+      <Route path="/legal/terminos" component={TerminosServicio} />
+      <Route path="/cookies" component={PoliticaCookies} />
+      <Route path="/legal/cookies" component={PoliticaCookies} />
       
       {/* Root Path: Show High-Performance SEO/AEO Landing Home for visitors, or Role Dashboard for logged-in users */}
       <Route path="/">
@@ -154,6 +166,7 @@ function App() {
         <LanguageProvider>
           <TooltipProvider>
             <Toaster />
+            <PrivacyBanner />
             <Router />
           </TooltipProvider>
         </LanguageProvider>

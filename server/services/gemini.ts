@@ -108,7 +108,7 @@ export class GeminiService {
 
   async generateEmergencyMessage(context: {
     userName: string;
-    location: { latitude: number; longitude: number; address?: string };
+    location?: { latitude: number; longitude: number; address?: string };
     language: string;
   }): Promise<GeminiResponse> {
     try {
@@ -167,17 +167,18 @@ export class GeminiService {
 
   private buildEmergencyPrompt(context: {
     userName: string;
-    location: { latitude: number; longitude: number; address?: string };
+    location?: { latitude: number; longitude: number; address?: string };
     language: string;
   }): string {
     const { userName, location, language } = context;
+    const address = location?.address || (location ? `Lat: ${location.latitude}, Lng: ${location.longitude}` : 'Ubicación no disponible');
     
     return loadSkill('Gemini_Emergency_Prompt.md', {
       language: language === 'es' ? 'español' : language === 'en' ? 'inglés' : 'francés',
       userName: userName,
-      address: location.address || `Lat: ${location.latitude}, Lng: ${location.longitude}`,
-      latitude: String(location.latitude),
-      longitude: String(location.longitude)
+      address,
+      latitude: location ? String(location.latitude) : '0',
+      longitude: location ? String(location.longitude) : '0'
     });
   }
 
@@ -199,17 +200,19 @@ export class GeminiService {
 
   private getFallbackEmergencyMessage(context: {
     userName: string;
-    location: { latitude: number; longitude: number; address?: string };
+    location?: { latitude: number; longitude: number; address?: string };
     language: string;
   }): string {
     const { userName, location, language } = context;
+    const locStr = location ? (location.address || `${location.latitude}, ${location.longitude}`) : 'Ubicación no reportada';
+    const mapsLink = location ? ` https://maps.google.com/maps?q=${location.latitude},${location.longitude}` : '';
     
     if (language === 'en') {
-      return `🚨 EMERGENCY: ${userName} needs immediate help! Location: ${location.address || `${location.latitude}, ${location.longitude}`} https://maps.google.com/maps?q=${location.latitude},${location.longitude}`;
+      return `🚨 EMERGENCY: ${userName} needs immediate help! Location: ${locStr}${mapsLink}`;
     } else if (language === 'fr') {
-      return `🚨 URGENCE: ${userName} a besoin d'aide immédiate! Localisation: ${location.address || `${location.latitude}, ${location.longitude}`} https://maps.google.com/maps?q=${location.latitude},${location.longitude}`;
+      return `🚨 URGENCE: ${userName} a besoin d'aide immédiate! Localisation: ${locStr}${mapsLink}`;
     } else {
-      return `🚨 EMERGENCIA: ${userName} necesita ayuda inmediata! Ubicación: ${location.address || `${location.latitude}, ${location.longitude}`} https://maps.google.com/maps?q=${location.latitude},${location.longitude}`;
+      return `🚨 EMERGENCIA: ${userName} necesita ayuda inmediata! Ubicación: ${locStr}${mapsLink}`;
     }
   }
 

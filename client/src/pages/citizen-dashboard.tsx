@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { 
@@ -402,6 +403,7 @@ export default function CitizenDashboard() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

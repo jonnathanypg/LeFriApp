@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
 import { VoiceRecorder } from '@/components/voice-recorder';
 import { toast } from '@/hooks/use-toast';
+import { FormattedMarkdown } from '@/components/formatted-markdown';
 
 interface ChatMessage {
   id: string;
@@ -219,11 +220,9 @@ export function StreamingChatInterface({ country }: StreamingChatInterfaceProps)
                       : 'bg-slate-900/90 border border-slate-800 text-slate-200 rounded-tl-sm shadow-lg'
                   }`}
                 >
-                  <div 
-                    className="whitespace-pre-wrap leading-relaxed space-y-2"
-                    dangerouslySetInnerHTML={{ 
-                      __html: formatMarkdown(message.content) 
-                    }}
+                  <FormattedMarkdown 
+                    content={message.content} 
+                    isUser={isUser}
                   />
 
                   {/* Constitutional RAG Citations */}

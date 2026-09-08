@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { 
@@ -891,6 +892,7 @@ export default function LawyerDashboard() {
           </TabsContent>
         </Tabs>
       </main>
+      <Footer />
     </div>
   );
 }

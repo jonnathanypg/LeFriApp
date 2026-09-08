@@ -12,6 +12,8 @@ import {
   MessageSquare, ArrowRight, Share2, CheckCircle2, Phone, Download, Lock
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { FormattedMarkdown } from '@/components/formatted-markdown';
+import { Footer } from '@/components/footer';
 
 export default function PublicChat() {
   const [, setLocation] = useLocation();
@@ -271,10 +273,10 @@ export default function PublicChat() {
                   className={`p-4 rounded-2xl max-w-[85%] text-sm sm:text-base leading-relaxed ${
                     msg.role === 'user'
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-none shadow-lg shadow-indigo-600/10'
-                      : 'bg-slate-900/90 text-slate-200 border border-slate-800 rounded-tl-none whitespace-pre-wrap'
+                      : 'bg-slate-900/90 text-slate-200 border border-slate-800 rounded-tl-none'
                   }`}
                 >
-                  {msg.content}
+                  <FormattedMarkdown content={msg.content} isUser={msg.role === 'user'} />
                 </div>
 
                 {msg.role === 'user' && (
@@ -390,6 +392,7 @@ export default function PublicChat() {
           </div>
         </DialogContent>
       </Dialog>
+      <Footer />
     </div>
   );
 }

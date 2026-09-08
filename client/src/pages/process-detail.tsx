@@ -6,6 +6,7 @@ import { AlertCircle, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'wouter';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 
 export function ProcessDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -57,6 +58,7 @@ export function ProcessDetailPage() {
           />
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

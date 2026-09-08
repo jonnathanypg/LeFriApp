@@ -11,6 +11,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTranslations } from '@/lib/i18n';
+import { Footer } from '@/components/footer';
 
 export default function LandingHome() {
   const [, setLocation] = useLocation();
@@ -367,23 +368,7 @@ export default function LandingHome() {
       </section>
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-800/80 bg-slate-950 py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center space-x-3 text-center md:text-left">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-              <BookOpen className="w-4 h-4" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-white">LeFriApp</p>
-              <p className="text-xs text-slate-400">{c.footerNote}</p>
-            </div>
-          </div>
-
-          <div className="text-center md:text-right text-xs text-slate-400 space-y-1">
-            <p>LeFriApp &copy; 2026. {c.footerRights}</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

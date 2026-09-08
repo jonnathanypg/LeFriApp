@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/use-auth';
 import { useLocation } from 'wouter';
@@ -277,6 +278,7 @@ export default function Profile() {
           </div>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

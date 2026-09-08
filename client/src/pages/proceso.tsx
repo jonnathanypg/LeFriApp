@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { ProcessModal } from '@/components/process-modal';
 import { api } from '@/lib/api';
 import { useLocation } from 'wouter';
@@ -192,6 +193,7 @@ export default function Proceso() {
         onClose={() => setIsModalOpen(false)}
         processType={selectedProcess}
       />
+      <Footer />
     </div>
   );
 }

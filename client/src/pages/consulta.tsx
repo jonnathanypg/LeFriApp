@@ -3,6 +3,7 @@ import { ArrowLeft, Sparkles, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { StreamingChatInterface } from '@/components/streaming-chat-interface';
 import { LegalIntakeWizard } from '@/components/legal-intake-wizard';
 import { useAuth } from '@/hooks/use-auth';
@@ -124,6 +125,7 @@ export default function Consulta() {
           )}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

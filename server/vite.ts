@@ -86,15 +86,25 @@ export function serveStatic(app: Express) {
     );
   }
 
-  // Servir archivos estáticos
+  // Servir archivos estáticos con maxAge pero sin cachear HTML
   app.use(express.static(distPath, {
     maxAge: "1y",
     etag: true,
     lastModified: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    }
   }));
 
-  // Servir el archivo index.html para todas las rutas no encontradas
+  // Servir el archivo index.html para todas las rutas SPA no encontradas
   app.use("*", (_req, res) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }

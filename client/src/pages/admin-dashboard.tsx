@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Navbar } from '@/components/navbar';
+import { Footer } from '@/components/footer';
 import { 
   Users, Briefcase, Phone, MessageSquare, 
   Send, Bot, CheckCircle, Clock, ShieldAlert,
@@ -698,6 +699,7 @@ export default function AdminDashboard() {
         )}
 
       </main>
+      <Footer />
     </div>
   );
 }
