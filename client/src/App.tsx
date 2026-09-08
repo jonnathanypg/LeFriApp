@@ -56,8 +56,12 @@ function Router() {
 
   return (
     <Switch>
-      {/* Public Chat & Landing */}
-      <Route path="/chat" component={PublicChat} />
+      {/* Public Routes & Authentication */}
+      <Route path="/chat">
+        <AuthGuard>
+          <PublicChat />
+        </AuthGuard>
+      </Route>
       <Route path="/login" component={Login} />
 
       {/* Compliance & Legal Pages */}

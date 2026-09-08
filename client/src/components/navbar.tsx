@@ -166,11 +166,6 @@ export function Navbar() {
                 <Link href="/" className="hover:text-white transition">
                   {language === 'en' ? 'Home' : language === 'pt' ? 'Início' : 'Inicio'}
                 </Link>
-                <span>&bull;</span>
-                <Link href="/chat" className="hover:text-indigo-400 transition flex items-center gap-1">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{language === 'en' ? 'Free Legal Chat' : language === 'pt' ? 'Chat Jurídico' : 'Consulta Gratuita'}</span>
-                </Link>
               </nav>
             )}
           </div>
